@@ -138,6 +138,7 @@ section h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 
 .sponsor img{width:100%;max-width:320px;height:auto;display:block}
 .sp-label{font-size:12px;font-weight:700;letter-spacing:.06em;color:#617066}
 .sponsor:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.duo{display:inline-flex;direction:rtl;gap:3px;justify-content:center}
 #rosterNote{margin:6px 2px 0}
 .sumline{font-size:13px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .ghead{margin-top:6px}
@@ -251,16 +252,17 @@ function tally(cup){
   for(const k in results){const x=results[k];if(isCup(x)!==cup)continue;const o=outcome(x);if(!o)continue;gf+=x.us;ga+=x.them;o==="W"?w++:o==="D"?d++:l++}
   return {w,d,l,gf,ga,p:w+d+l};
 }
+const seq=(a,sep)=>a.map(v=>`<span>${v}</span>`).join(`<span>${sep}</span>`);
 function renderStats(){
   const s=tally(false);
   document.getElementById("stats").innerHTML=
    `<div class="stat"><b>${s.p}/30</b><span>שוחקו</span></div>`+
-   `<div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>נ-ת-ה</span></div>`+
-   `<div class="stat"><b>${s.gf}:${s.ga}</b><span>זכות:חובה</span></div>`+
+   `<div class="stat"><b class="duo">${seq([s.w,s.d,s.l],"–")}</b><span>נ-ת-ה</span></div>`+
+   `<div class="stat"><b class="duo">${seq([s.gf,s.ga],":")}</b><span>זכות:חובה</span></div>`+
    `<div class="stat"><b>${s.w*3+s.d}</b><span>נקודות</span></div>`;
   document.getElementById("leagueSum").textContent=`${s.p} מתוך 30 שוחקו`;
   const c=tally(true),cn=allGames().filter(g=>g.comp==="cup").length;
-  document.getElementById("cupSum").textContent=cn?`${cn} משחקים · ${c.w}-${c.d}-${c.l} · שערים ${c.gf}:${c.ga}`:"";
+  document.getElementById("cupSum").textContent=cn?`${cn} משחקים · ${c.w} נ׳ · ${c.d} ת׳ · ${c.l} ה׳ · זכות ${c.gf} · חובה ${c.ga}`:"";
 }
 function renderScorers(){
   const m={};
