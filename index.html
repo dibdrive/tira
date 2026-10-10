@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f6b3a">
+<style>body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<title>צעירי טירה 2026/27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&display=swap">
+<style>
+/* Layout: season-summary strip on top, then a single chronological match list; tap a match to open its score card in place. */
+:root{
+  --bg:#f3f5ef; --surface:#ffffff; --ink:#18241c; --muted:#617066; --line:#dde3d8;
+  --pitch:#1f6b3a; --pitch-ink:#ffffff; --chalk:#e9efe4;
+  --win:#1f7a44; --draw:#9a7a12; --loss:#b23a32; --pending:#7a6f60;
+  --display:"Secular One","Assistant",system-ui,sans-serif;
+  --body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101612; --surface:#18211b; --ink:#e8efe9; --muted:#97a69b; --line:#2a352d;
+  --pitch:#2f8a4f; --pitch-ink:#ffffff; --chalk:#1d2a21;
+  --win:#4cc27a; --draw:#e0bd4e; --loss:#ef7a70; --pending:#b3a998; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101612; --surface:#18211b; --ink:#e8efe9; --muted:#97a69b; --line:#2a352d;
+  --pitch:#2f8a4f; --pitch-ink:#ffffff; --chalk:#1d2a21;
+  --win:#4cc27a; --draw:#e0bd4e; --loss:#ef7a70; --pending:#b3a998; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;direction:rtl}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:20px}
+header.hero{background:var(--pitch);color:var(--pitch-ink);border-radius:18px;padding:20px 18px 18px;position:relative;overflow:hidden}
+header.hero::after{content:"";position:absolute;inset:auto -60px -60px auto;width:180px;height:180px;border:2px solid rgba(255,255,255,.22);border-radius:50%}
+header.hero::before{content:"";position:absolute;top:0;bottom:0;left:38%;border-left:2px solid rgba(255,255,255,.14)}
+.eyebrow{font-size:13px;letter-spacing:.04em;opacity:.85}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,7vw,38px);margin:2px 0 14px;text-wrap:balance;position:relative}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.stat{background:rgba(255,255,255,.12);border-radius:12px;padding:8px 6px;text-align:center}
+.stat b{display:block;font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:12px;opacity:.9}
+.sync{position:relative;margin-top:10px;font-size:12px;opacity:.8}
+section h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 10px}
+.scorers{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.scorers ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.scorers li{display:flex;align-items:center;gap:10px}
+.scorers .rank{width:22px;color:var(--muted);font-variant-numeric:tabular-nums}
+.scorers .nm{flex:1;min-width:0;font-weight:600}
+.scorers .g{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:18px}
+.empty{color:var(--muted);font-size:14px}
+.roster{list-style:none;margin:0;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 14px}
+.roster li{display:flex;align-items:center;gap:8px;min-width:0}
+.roster .no{flex:none;width:30px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--chalk);color:var(--pitch);font-family:var(--display);font-variant-numeric:tabular-nums}
+.roster em{font-style:normal;font-size:11px;font-weight:700;color:var(--pitch);border:1px solid var(--pitch);border-radius:99px;padding:0 6px}
+.month{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.03em;margin:14px 2px 6px}
+.games{display:flex;flex-direction:column}
+.game{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
+.game.next{border-color:var(--pitch);box-shadow:0 0 0 2px color-mix(in srgb,var(--pitch) 30%,transparent)}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;width:100%;padding:12px;cursor:pointer;border-radius:14px}
+.row:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.rd{text-align:center;line-height:1.1}
+.rd b{display:block;font-family:var(--display);font-weight:400;font-size:18px;font-variant-numeric:tabular-nums}
+.rd span{font-size:11px;color:var(--muted)}
+.mid{min-width:0}
+.opp{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.meta{font-size:13px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.ha{font-weight:700}
+.res{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.score{font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+.chip{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;color:var(--surface);white-space:nowrap}
+.chip.W{background:var(--win)}.chip.D{background:var(--draw)}.chip.L{background:var(--loss)}
+.chip.P{background:transparent;color:var(--pending);border:1px dashed var(--pending)}
+.chip.N{background:var(--pitch)}
+.sc-line{font-size:13px;color:var(--muted);padding:0 12px 10px 12px;margin-top:-4px}
+.edit{border-top:1px solid var(--line);padding:14px 12px;display:flex;flex-direction:column;gap:14px;background:var(--chalk);border-radius:0 0 14px 14px}
+.board{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.team{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;text-align:center}
+.team label{font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.team.us label{color:var(--pitch)}
+.num{width:64px;height:56px;text-align:center;font-family:var(--display);font-size:28px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.num:focus-visible,.txt:focus-visible{outline:2px solid var(--pitch);outline-offset:1px}
+.dash{font-family:var(--display);font-size:24px;color:var(--muted)}
+.slist{display:flex;flex-direction:column;gap:8px}
+.srow{display:flex;gap:8px;align-items:center}
+.txt{flex:1;min-width:0;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;background:var(--surface);color:var(--ink)}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.step button{all:unset;width:34px;height:40px;text-align:center;cursor:pointer;font-size:20px;color:var(--pitch)}
+.step button:focus-visible{outline:2px solid var(--pitch)}
+.step output{min-width:22px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.x{all:unset;cursor:pointer;color:var(--muted);font-size:20px;padding:0 6px}
+.hint{font-size:12px;color:var(--muted)}
+.hint.warn{color:var(--loss)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--pitch);color:var(--pitch-ink);border-color:var(--pitch)}
+.btn.ghost{background:transparent}
+.btn:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.btn:disabled{opacity:.6;cursor:default}
+.slabel{font-size:13px;font-weight:700}
+@media (max-width:420px){.stat b{font-size:20px}.num{width:56px;height:50px;font-size:24px}}
+@media (prefers-reduced-motion:no-preference){.edit{animation:open .18s ease-out}@keyframes open{from{opacity:.4;transform:translateY(-4px)}to{opacity:1;transform:none}}}
+</style>
+
+<style>
+.comp{font-size:11px;font-weight:700;padding:0 7px;border-radius:99px;border:1px solid var(--draw);color:var(--draw)}
+.rd .cup{font-size:18px;line-height:1.2;color:var(--draw);font-family:var(--display)}
+.ghead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.ghead h2{margin:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.fbtn[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.fbtn:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.addcup{background:var(--surface);border:1px dashed var(--draw);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.addcup .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.addcup .grid > *{min-width:0}
+.addcup label{font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:4px}
+.addcup select,.addcup input{height:42px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;background:var(--bg);color:var(--ink);width:100%}
+.addcup .full{grid-column:1/-1}
+.row.ro{cursor:default}
+.sqhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sqbtns{display:flex;gap:12px}
+.lnk{all:unset;cursor:pointer;font-size:13px;font-weight:700;color:var(--pitch)}
+.lnk:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{font:inherit;font-size:14px;display:inline-flex;align-items:center;gap:6px;padding:6px 10px 6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.pchip b{font-family:var(--display);font-weight:400;font-variant-numeric:tabular-nums;color:var(--pitch)}
+.pchip[aria-pressed="true"]{background:var(--pitch);border-color:var(--pitch);color:var(--pitch-ink)}
+.pchip[aria-pressed="true"] b{color:var(--pitch-ink)}
+.pchip:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.roster .rn{flex:1;min-width:0}
+.roster .apps{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#rosterNote{margin:6px 2px 0}
+.sumline{font-size:13px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.ghead{margin-top:6px}
+.sctab{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.sctab th{font-size:12px;color:var(--muted);font-weight:700;text-align:center;padding:0 4px 6px}
+.sctab th:nth-child(2){text-align:right}
+.sctab td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
+.sctab td.nm{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.sctab td.rank{color:var(--muted);width:24px}
+.sctab td.tot{font-family:var(--display);font-size:18px}
+.auth{position:relative;margin-top:8px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;opacity:.95}
+.auth .lnk{color:var(--pitch-ink);text-decoration:underline}
+.stats-note{position:relative;font-size:12px;opacity:.8;margin-top:6px}
+</style>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27</div>
+    <h1>מ.כ. צעירי טירה</h1>
+    <div class="stats" id="stats"></div>
+    <div class="stats-note">מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה</div>
+    <div class="sync" id="sync">טוען…</div>
+    <div class="auth" id="auth"></div>
+  </header>
+
+  <section>
+    <h2>מלך השערים</h2>
+    <div class="scorers" id="scorers"></div>
+  </section>
+
+  <section>
+    <h2>סגל הקבוצה</h2>
+    <ul class="roster" id="roster"></ul>
+    <p class="hint" id="rosterNote"></p>
+  </section>
+
+  <section>
+    <div class="ghead"><h2>ליגה · שרון 2</h2><span class="sumline" id="leagueSum"></span></div>
+    <div class="games" id="games"></div>
+  </section>
+
+  <section>
+    <div class="ghead"><h2>🏆 גביע ילדים ב׳</h2><span class="sumline" id="cupSum"></span></div>
+    <div class="games" id="cupGames"></div>
+    <button class="btn" id="addCupBtn">+ הוסף משחק גביע</button>
+    <form class="addcup" id="addCup" hidden>
+      <div class="grid">
+        <label class="full">יריבה<input id="cOpp" required placeholder="שם הקבוצה היריבה"></label>
+        <label>תאריך<input id="cDate" type="date" required></label>
+        <label>בית / חוץ<select id="cHome"><option value="1">בית</option><option value="0">חוץ</option></select></label>
+        <label class="full">שלב<input id="cStage" placeholder="למשל: סיבוב 2"></label>
+      </div>
+      <div class="hint" id="cHint"></div>
+      <div class="actions"><button class="btn primary" type="submit">הוסף לטבלה</button><button class="btn ghost" type="button" id="cCancel">ביטול</button></div>
+    </form>
+  </section>
+</div>
+
+<script>
+const T = "מ.כ. צעירי טירה";
+const FIX = [
+ [1,"14/10/26","שמשון בני טייבה",1],[2,"17/10/26","איחוד בני בקה",0],
+ [3,"28/10/26","בית\"ר כ\"ס שלומי",1],[4,"31/10/26","הפועל עליה כפר סבא 2",0],
+ [5,"28/11/26","מ.כ. טייבה",1],[6,"05/12/26","מ.כ. בני רעננה",0],
+ [7,"19/12/26","בני הרצליה",1],[8,"26/12/26","מ.כ.ע אריאל 2",1],
+ [9,"09/01/27","מ.ס. טירה",0],[10,"16/01/27","הפועל חדרה מערב",1],
+ [11,"23/01/27","הפועל אורנית",0],[12,"30/01/27","מכבי השרון נתניה",1],
+ [13,"06/02/27","מ.ס. איחוד דרום השרון מערב",0],[14,"13/02/27","מ.ס. קדימה צורן 2",1],
+ [15,"20/02/27","הפועל כפר קאסם שועאע 2",0],[16,"06/03/27","שמשון בני טייבה",0],
+ [17,"13/03/27","איחוד בני בקה",1],[18,"20/03/27","בית\"ר כ\"ס שלומי",0],
+ [19,"27/03/27","הפועל עליה כפר סבא 2",1],[20,"03/04/27","מ.כ. טייבה",0],
+ [21,"06/04/27","מ.כ. בני רעננה",1],[22,"10/04/27","בני הרצליה",0],
+ [23,"17/04/27","מ.כ.ע אריאל 2",0],[24,"24/04/27","מ.ס. טירה",1],
+ [25,"01/05/27","הפועל חדרה מערב",0],[26,"08/05/27","הפועל אורנית",1],
+ [27,"15/05/27","מכבי השרון נתניה",0],[28,"18/05/27","מ.ס. איחוד דרום השרון מערב",1],
+ [29,"22/05/27","מ.ס. קדימה צורן 2",0],[30,"29/05/27","הפועל כפר קאסם שועאע 2",1]
+].map(([r,d,o,h])=>{const [dd,mm,yy]=d.split("/").map(Number);return {key:"r"+r,comp:"league",r,o,home:!!h,date:new Date(2000+yy,mm-1,dd)}});
+const ROSTER=[[1,"כרים עתילי","שוער"],[2,"חמזה פדילה"],[4,"נדים מנסור","קפטן"],[5,"אבראהים נאסר"],[7,"מוחמד עבד אלחי"],[8,"יוסף בשארה"],[9,"מוחמד עבד אל חי"],[10,"זוהיר נאסר"],[11,"אדם סולטאן"],[12,"כארם כורי"],[14,"עבד אלפתאח פדילה"],[15,"איהם ראבי"],[17,"מוחמד יאסין"],[19,"סנד שתיווי"],[20,"סובחי סולטאן"],[41,"נסר דעאס"],[80,"עבד אל רחים חסקיה"],[99,"יוסף עבד אל חי"]];
+const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const MONTHS=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+
+let results = {};   // docId -> league: {round,us,them,scorers}; cup: {comp:"cup",opponent,date:"YYYY-MM-DD",home,stage,us,them,scorers}
+let openKey = null, draft = null, db = null, booted = false, canEdit = false;
+const LS = "tzeirei-tira-2627-v2";
+function lsLoad(){try{return JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){return {}}}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(results))}catch(e){}}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function today(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+function outcome(x){if(!x||x.us==null||x.them==null)return null;return x.us>x.them?"W":x.us<x.them?"L":"D"}
+const fmt=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
+function setSync(t){document.getElementById("sync").textContent=t}
+
+function allGames(){
+  const cups=Object.entries(results).filter(([k,v])=>v&&v.comp==="cup"&&v.date).map(([k,v])=>{
+    const [y,m,d]=v.date.split("-").map(Number);
+    return {key:k,comp:"cup",o:v.opponent||"",home:!!v.home,stage:v.stage||"",date:new Date(y,m-1,d)};
+  });
+  return FIX.concat(cups).sort((a,b)=>a.date-b.date||(a.comp==="cup"?-1:1));
+}
+
+const isCup=x=>x&&x.comp==="cup";
+function tally(cup){
+  let w=0,d=0,l=0,gf=0,ga=0;
+  for(const k in results){const x=results[k];if(isCup(x)!==cup)continue;const o=outcome(x);if(!o)continue;gf+=x.us;ga+=x.them;o==="W"?w++:o==="D"?d++:l++}
+  return {w,d,l,gf,ga,p:w+d+l};
+}
+function renderStats(){
+  const s=tally(false);
+  document.getElementById("stats").innerHTML=
+   `<div class="stat"><b>${s.p}/30</b><span>שוחקו</span></div>`+
+   `<div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>נ-ת-ה</span></div>`+
+   `<div class="stat"><b>${s.gf}:${s.ga}</b><span>זכות:חובה</span></div>`+
+   `<div class="stat"><b>${s.w*3+s.d}</b><span>נקודות</span></div>`;
+  document.getElementById("leagueSum").textContent=`${s.p} מתוך 30 שוחקו`;
+  const c=tally(true),cn=allGames().filter(g=>g.comp==="cup").length;
+  document.getElementById("cupSum").textContent=cn?`${cn} משחקים · ${c.w}-${c.d}-${c.l} · שערים ${c.gf}:${c.ga}`:"";
+}
+function renderScorers(){
+  const m={};
+  for(const k in results){const cup=isCup(results[k]);(results[k].scorers||[]).forEach(s=>{const n=(s.name||"").trim();if(!n)return;m[n]=m[n]||{l:0,c:0};m[n][cup?"c":"l"]+=(s.goals||0)})}
+  const list=Object.entries(m).map(([n,v])=>[n,v.l,v.c,v.l+v.c]).sort((a,b)=>b[3]-a[3]||b[1]-a[1]||a[0].localeCompare(b[0],"he"));
+  const el=document.getElementById("scorers");
+  if(!list.length){el.innerHTML=`<p class="empty">אחרי שתזין מבקיעים במשחקים, הטבלה תתמלא כאן.</p>`;return}
+  let rank=0,prev=null;
+  el.innerHTML=`<table class="sctab"><thead><tr><th></th><th>שחקן</th><th>ליגה</th><th>גביע</th><th>סה״כ</th></tr></thead><tbody>`+
+    list.map(([n,l,c,t],i)=>{if(t!==prev){rank=i+1;prev=t}return `<tr><td class="rank">${rank}</td><td class="nm">${esc(n)}</td><td>${l}</td><td>${c}</td><td class="tot">${t}</td></tr>`}).join("")+`</tbody></table>`;
+}
+function renderRoster(){
+  const apps={};let tracked=0;
+  for(const k in results){const sq=results[k].squad;if(sq&&sq.length){tracked++;sq.forEach(n=>apps[n]=(apps[n]||0)+1)}}
+  document.getElementById("roster").innerHTML=ROSTER.map(p=>`<li><span class="no">${p[0]}</span><span class="rn">${esc(p[1])}</span>${p[2]?`<em>${p[2]}</em>`:""}${tracked?`<span class="apps" title="משחקים בסגל">${apps[p[0]]||0}/${tracked}</span>`:""}</li>`).join("");
+  document.getElementById("rosterNote").textContent=tracked?`המספר בצד = במכמה משחקים השחקן היה בסגל, מתוך ${tracked} משחקים שבהם נרשם סגל`:"";
+}
+function updSquadLabel(){const l=document.querySelector(".edit .sqhead .slabel");if(l)l.textContent=`סגל למשחק · ${draft.squad.length} שחקנים`}
+function allNames(){
+  const sq=draft&&draft.squad.length?ROSTER.filter(p=>draft.squad.includes(p[0])):ROSTER;
+  const s=new Set(sq.map(([n,nm])=>`${nm} (${n})`));for(const k in results)(results[k].scorers||[]).forEach(x=>x.name&&s.add(x.name.trim()));return [...s]}
+
+function renderGames(){
+  const t=today(),games=allGames();
+  const nextG=games.find(g=>g.date>=t&&!outcome(results[g.key]));
+  for(const comp of ["league","cup"]){
+  let html="",lastM=-1;
+  for(const g of games){
+    if(g.comp!==comp)continue;
+    const mk=g.date.getFullYear()*12+g.date.getMonth();
+    if(mk!==lastM){html+=`<div class="month">${MONTHS[g.date.getMonth()]} ${g.date.getFullYear()}</div>`;lastM=mk}
+    const x=results[g.key],o=outcome(x),isNext=nextG&&g.key===nextG.key;
+    let right="";
+    if(o){const a=g.home?x.us:x.them,b=g.home?x.them:x.us;
+      right=`<span class="score">${a} - ${b}</span><span class="chip ${o}">${o==="W"?"ניצחון":o==="D"?"תיקו":"הפסד"}</span>`}
+    else if(isNext) right=`<span class="chip N">המשחק הבא</span>`;
+    else if(g.date<t) right=`<span class="chip P">חסרה תוצאה</span>`;
+    const sc=(x&&x.scorers||[]).filter(s=>s.name&&s.goals>0);
+    const rd=g.comp==="cup"?`<span class="rd"><b class="cup">🏆</b><span>גביע</span></span>`:`<span class="rd"><b>${g.r}</b><span>מחזור</span></span>`;
+    html+=`<div class="game${isNext?" next":""}" id="g-${g.key}">
+      <button class="row${canEdit?"":" ro"}" data-k="${g.key}" ${canEdit?`aria-expanded="${openKey===g.key}"`:`tabindex="-1" aria-disabled="true"`}>
+        ${rd}
+        <span class="mid"><span class="opp">${esc(g.o)}</span>
+          <span class="meta"><span class="ha">${g.home?"בית":"חוץ"}</span><span>יום ${DAYS[g.date.getDay()]} · ${fmt(g.date)}</span>${g.comp==="cup"&&g.stage?`<span class="comp">${esc(g.stage)}</span>`:""}</span></span>
+        <span class="res">${right}</span>
+      </button>
+      ${(sc.length||(x&&x.squad&&x.squad.length))&&openKey!==g.key?`<div class="sc-line">${x.squad&&x.squad.length?`👕 ${x.squad.length} בסגל`:""}${x.squad&&x.squad.length&&sc.length?" · ":""}${sc.length?`⚽ ${sc.map(s=>esc(s.name)+(s.goals>1?` ×${s.goals}`:"")).join(" · ")}`:""}</div>`:""}
+      ${openKey===g.key?editor(g):""}
+    </div>`;
+  }
+  document.getElementById(comp==="cup"?"cupGames":"games").innerHTML=html||`<p class="empty">עדיין אין משחקי גביע. הוסף משחק כשהוא נקבע.</p>`;
+  }
+}
+function hintText(){const sum=draft.scorers.reduce((a,s)=>a+(s.goals||0),0);
+  if(draft.us==null)return ["אפשר לשמור את הסגל גם לפני שיש תוצאה",false];
+  if(sum!==draft.us)return [`סך השערים של המבקיעים (${sum}) לא שווה לתוצאה (${draft.us})`,true];
+  return ["המבקיעים תואמים לתוצאה",false]}
+function editor(g){
+  const d=draft;
+  const us=`<div class="team us"><label for="us">${T}</label><input class="num" id="us" inputmode="numeric" type="number" min="0" max="99" value="${d.us??""}"></div>`;
+  const th=`<div class="team"><label for="them">${esc(g.o)}</label><input class="num" id="them" inputmode="numeric" type="number" min="0" max="99" value="${d.them??""}"></div>`;
+  const [ht,warn]=hintText();
+  return `<div class="edit">
+    <div class="hint">${g.comp==="cup"?"גביע":"ליגה"} · ${g.home?"משחק בית":"משחק חוץ"} · יום ${DAYS[g.date.getDay()]} ${fmt(g.date)}</div>
+    <div class="board">${g.home?us:th}<span class="dash">:</span>${g.home?th:us}</div>
+    <div class="sqhead"><span class="slabel">סגל למשחק · ${d.squad.length} שחקנים</span>
+      <span class="sqbtns"><button class="lnk" id="sqall">בחר הכול</button><button class="lnk" id="sqnone">נקה</button></span></div>
+    <div class="chips">${ROSTER.map(p=>{const on=d.squad.includes(p[0]);return `<button class="pchip" data-pl="${p[0]}" aria-pressed="${on}"><b>${p[0]}</b>${esc(p[1])}</button>`}).join("")}</div>
+    <div class="slabel">מבקיעים של צעירי טירה</div>
+    <div class="slist">${d.scorers.map((s,i)=>`<div class="srow">
+      <input class="txt" id="sn${i}" data-i="${i}" list="names" placeholder="שם השחקן" value="${esc(s.name||"")}" aria-label="שם מבקיע ${i+1}">
+      <div class="step"><button data-dec="${i}" aria-label="פחות">−</button><output>${s.goals}</output><button data-inc="${i}" aria-label="עוד">+</button></div>
+      <button class="x" data-del="${i}" aria-label="הסר">×</button></div>`).join("")}</div>
+    <datalist id="names">${allNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    <div class="hint status${warn?" warn":""}">${ht}</div>
+    <div class="actions">
+      <button class="btn" id="add">+ הוסף מבקיע</button>
+      <button class="btn primary" id="save">שמור</button>
+      <button class="btn ghost" id="cancel">סגור</button>
+      ${g.comp==="cup"?`<button class="btn ghost" id="rmcup">הסר משחק</button>`:results[g.key]?`<button class="btn ghost" id="clear">מחק תוצאה</button>`:""}
+    </div></div>`;
+}
+function renderAll(){
+  if(!canEdit){openKey=null;draft=null;form.hidden=true}
+  addBtn.hidden=!canEdit||!form.hidden;
+  renderRoster();renderStats();renderScorers();renderGames();
+}
+
+function openGame(k){
+  if(openKey===k){openKey=null;draft=null;renderGames();return}
+  openKey=k;const x=results[k]||{};
+  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])]};
+  renderGames();
+  document.getElementById("g-"+k).scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function num(v){if(v===""||v==null)return null;const n=Math.max(0,Math.min(99,parseInt(v,10)));return isNaN(n)?null:n}
+function writeFailed(e){
+  const c=e&&e.code;
+  if(c==="unavailable"||c==="resource-exhausted"){setSync("השמירה נכשלה. בדוק חיבור ונסה שוב");return}
+  canEdit=false;setSync("צפייה בלבד · אין לך הרשאה לשנות");
+}
+async function writeDoc(k,rec){
+  if(!db||!canEdit)return;
+  try{await db.doc("results/"+k).set(rec);results[k]=rec;lsSave()}catch(e){writeFailed(e)}
+}
+async function removeDoc(k){
+  if(!db||!canEdit)return;
+  try{await db.doc("results/"+k).delete();delete results[k];lsSave()}catch(e){writeFailed(e)}
+}
+
+const onGameClick=async e=>{
+  const row=e.target.closest(".row");if(row){if(canEdit)openGame(row.dataset.k);return}
+  const b=e.target.closest("button");if(!b||!draft)return;
+  if(b.dataset.pl!=null){const n=+b.dataset.pl,i=draft.squad.indexOf(n);i<0?draft.squad.push(n):draft.squad.splice(i,1);b.setAttribute("aria-pressed",String(i<0));updSquadLabel();return}
+  if(b.id==="sqall"||b.id==="sqnone"){draft.squad=b.id==="sqall"?ROSTER.map(p=>p[0]):[];document.querySelectorAll(".edit .pchip").forEach(c=>c.setAttribute("aria-pressed",String(b.id==="sqall")));updSquadLabel();return}
+  if(b.dataset.inc!=null){draft.scorers[+b.dataset.inc].goals++;renderGames();return}
+  if(b.dataset.dec!=null){const s=draft.scorers[+b.dataset.dec];s.goals=Math.max(1,s.goals-1);renderGames();return}
+  if(b.dataset.del!=null){draft.scorers.splice(+b.dataset.del,1);renderGames();return}
+  if(b.id==="add"){draft.scorers.push({name:"",goals:1});renderGames();const i=document.getElementById("sn"+(draft.scorers.length-1));i&&i.focus();return}
+  if(b.id==="cancel"){openKey=null;draft=null;renderGames();return}
+  const k=openKey;
+  if(b.id==="save"){
+    if((draft.us==null)!==(draft.them==null)){const h=document.querySelector(".edit .status");h.textContent="צריך להזין את שתי התוצאות, או להשאיר את שתיהן ריקות";h.classList.add("warn");return}
+    const base=results[k]&&results[k].comp==="cup"?{...results[k]}:{round:+k.slice(1)};
+    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
+    b.disabled=true;b.textContent="שומר…";
+    openKey=null;draft=null;await writeDoc(k,rec);renderAll();return}
+  if(b.id==="clear"){openKey=null;draft=null;await removeDoc(k);renderAll();return}
+  if(b.id==="rmcup"){
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ללחוץ שוב כדי להסיר";return}
+    openKey=null;draft=null;await removeDoc(k);renderAll();return}
+};
+const onGameInput=e=>{
+  if(!draft)return;const t=e.target;
+  if(t.id==="us")draft.us=num(t.value);
+  else if(t.id==="them")draft.them=num(t.value);
+  else if(t.dataset.i!=null)draft.scorers[+t.dataset.i].name=t.value;
+  const h=document.querySelector(".edit .status");if(h){const [ht,w]=hintText();h.textContent=ht;h.classList.toggle("warn",w)}
+};
+for(const id of ["games","cupGames"]){const el=document.getElementById(id);el.addEventListener("click",onGameClick);el.addEventListener("input",onGameInput)}
+const form=document.getElementById("addCup"),addBtn=document.getElementById("addCupBtn");
+addBtn.addEventListener("click",()=>{form.hidden=false;addBtn.hidden=true;document.getElementById("cOpp").focus()});
+document.getElementById("cCancel").addEventListener("click",()=>{form.hidden=true;addBtn.hidden=false});
+form.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const opp=document.getElementById("cOpp").value.trim(),date=document.getElementById("cDate").value;
+  if(!opp||!date){document.getElementById("cHint").textContent="צריך יריבה ותאריך";return}
+  const k="c"+date.replaceAll("-","")+Math.random().toString(36).slice(2,6);
+  await writeDoc(k,{comp:"cup",opponent:opp,date,home:document.getElementById("cHome").value==="1",stage:document.getElementById("cStage").value.trim(),us:null,them:null,scorers:[]});
+  form.reset();form.hidden=true;addBtn.hidden=false;document.getElementById("cHint").textContent="";renderAll();
+});
+
+// ===== Firebase =====
+const OWNER_EMAIL = "dib.arkan@gmail.com";
+const firebaseConfig = { apiKey:"AIzaSyCdS8w1u59iP25i42sM7KB_MX48gF-3szw", authDomain:"tira-kids.firebaseapp.com", projectId:"tira-kids", storageBucket:"tira-kids.firebasestorage.app", messagingSenderId:"319456168508", appId:"1:319456168508:web:dfdaf008bc7945938e5139" };
+const SEED = { c20261009a:{comp:"cup",opponent:"הפועל כפר סבא מערב",date:"2026-10-09",home:false,stage:"סיבוב 1",us:4,them:0,scorers:[],squad:[1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,41,80,99]} };
+let fbUser=null;
+function renderAuth(){
+  const el=document.getElementById("auth");
+  if(fbUser){el.innerHTML=`<span>${esc(fbUser.email||"")}</span><button class="lnk" id="logout">יציאה</button>`}
+  else el.innerHTML=`<button class="lnk" id="login">כניסת מנהל</button>`;
+}
+document.getElementById("auth").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.id==="login"){try{await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(err){setSync("הכניסה נכשלה: "+(err.code||""))}}
+  if(b.id==="logout")firebase.auth().signOut();
+});
+results=lsLoad();renderAll();setSync("טוען…");
+try{
+  firebase.initializeApp(firebaseConfig);
+  db=firebase.firestore();
+  firebase.auth().onAuthStateChanged(async u=>{
+    fbUser=u;canEdit=!!(u&&u.email&&u.email.toLowerCase()===OWNER_EMAIL);
+    renderAuth();
+    setSync(canEdit?"מצב עריכה ✓":u?"החשבון הזה לא מורשה לערוך":"");
+    renderAll();
+    if(canEdit&&booted&&!Object.keys(results).length){for(const k in SEED){try{await db.doc("results/"+k).set(SEED[k])}catch(e){}}}
+  });
+  db.collection("results").onSnapshot(snap=>{
+    const next={};
+    snap.docs.forEach(d=>{const v=d.data();if(v)next[d.id]=v});
+    const first=!booted;booted=true;
+    results=next;lsSave();
+    renderRoster();renderStats();renderScorers();if(openKey==null)renderGames();
+    if(first&&canEdit&&!snap.size){for(const k in SEED)db.doc("results/"+k).set(SEED[k]).catch(()=>{})}
+  },()=>setSync("אין חיבור לשרת. מציג נתונים שמורים"));
+}catch(e){setSync("שגיאה בחיבור לשרת")}
+</script>
+
+</body>
+</html>
