@@ -143,7 +143,10 @@ section h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 
 .sctab td.rank{color:var(--muted);width:24px}
 .sctab td.tot{font-family:var(--display);font-size:18px}
 .auth{position:relative;margin-top:8px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;opacity:.95}
-.auth .lnk{color:var(--pitch-ink);text-decoration:underline}
+header.hero::before,header.hero::after{pointer-events:none}
+.auth{z-index:1}
+.auth .lnk{color:var(--pitch);background:var(--pitch-ink);text-decoration:none;padding:7px 14px;border-radius:99px;font-size:14px}
+.auth span{opacity:.9}
 .stats-note{position:relative;font-size:12px;opacity:.8;margin-top:6px}
 </style>
 <div class="wrap">
