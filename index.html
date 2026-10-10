@@ -143,6 +143,9 @@ section h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 
 .titlerow h1{margin:0}
 .crest{width:76px;height:76px;border-radius:50%;background:#fff;padding:6px;flex:none;box-shadow:0 2px 10px rgba(0,0,0,.25);object-fit:contain}
 @media (max-width:420px){.crest{width:60px;height:60px}}
+.edit.view .pchip{cursor:default}
+.vres{display:flex;align-items:center;gap:10px}
+.vsc{line-height:1.8}
 #rosterNote{margin:6px 2px 0}
 .sumline{font-size:13px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .ghead{margin-top:6px}
@@ -311,18 +314,30 @@ function renderGames(){
     const sc=(x&&x.scorers||[]).filter(s=>s.name&&s.goals>0);
     const rd=g.comp==="cup"?`<span class="rd"><b class="cup">🏆</b><span>גביע</span></span>`:`<span class="rd"><b>${g.r}</b><span>מחזור</span></span>`;
     html+=`<div class="game${isNext?" next":""}" id="g-${g.key}">
-      <button class="row${canEdit?"":" ro"}" data-k="${g.key}" ${canEdit?`aria-expanded="${openKey===g.key}"`:`tabindex="-1" aria-disabled="true"`}>
+      <button class="row" data-k="${g.key}" aria-expanded="${openKey===g.key}">
         ${rd}
         <span class="mid"><span class="opp">${esc(g.o)}</span>
           <span class="meta"><span class="ha">${g.home?"בית":"חוץ"}</span><span>יום ${DAYS[g.date.getDay()]} · ${fmt(g.date)}</span>${g.comp==="cup"&&g.stage?`<span class="comp">${esc(g.stage)}</span>`:""}</span></span>
         <span class="res">${right}</span>
       </button>
       ${(()=>{if(openKey===g.key||!x)return "";const parts=[];if(x.squad&&x.squad.length)parts.push(`👕 ${x.squad.length} בסגל`);if(x.captain!=null){const c=ROSTER.find(p=>p[0]===x.captain);if(c)parts.push(`Ⓒ ${esc(c[1])}`)}if(sc.length)parts.push(`⚽ ${sc.map(s=>esc(s.name)+(s.goals>1?` ×${s.goals}`:"")).join(" · ")}`);return parts.length?`<div class="sc-line">${parts.join(" · ")}</div>`:""})()}
-      ${openKey===g.key?editor(g):""}
+      ${openKey===g.key?(canEdit&&draft?editor(g):viewCard(g)):""}
     </div>`;
   }
   document.getElementById(comp==="cup"?"cupGames":"games").innerHTML=html||`<p class="empty">עדיין אין משחקי גביע. הוסף משחק כשהוא נקבע.</p>`;
   }
+}
+function viewCard(g){
+  const x=results[g.key];
+  if(!x)return `<div class="edit view"><p class="empty">עוד אין נתונים למשחק הזה.</p></div>`;
+  const o=outcome(x);const parts=[];
+  if(o){const a=g.home?x.us:x.them,b=g.home?x.them:x.us;parts.push(`<div class="vres"><span class="score">${a} - ${b}</span><span class="chip ${o}">${o==="W"?"ניצחון":o==="D"?"תיקו":"הפסד"}</span></div>`)}
+  const sq=(x.squad||[]).map(n=>ROSTER.find(p=>p[0]===n)).filter(Boolean);
+  if(sq.length)parts.push(`<div class="slabel">הסגל במשחק · ${sq.length} שחקנים</div><div class="chips">${sq.map(p=>`<span class="pchip" aria-pressed="true"><b>${p[0]}</b>${esc(p[1])}${x.captain===p[0]?" Ⓒ":""}</span>`).join("")}</div>`);
+  const sc=(x.scorers||[]).filter(s=>s.name&&s.goals>0);
+  if(sc.length)parts.push(`<div class="slabel">מבקיעים</div><div class="vsc">${sc.map(s=>`⚽ ${esc(s.name)}${s.goals>1?` ×${s.goals}`:""}`).join("<br>")}</div>`);
+  if(!parts.length)parts.push(`<p class="empty">עוד אין נתונים למשחק הזה.</p>`);
+  return `<div class="edit view">${parts.join("")}</div>`;
 }
 function hintText(){const sum=draft.scorers.reduce((a,s)=>a+(s.goals||0),0);
   if(draft.us==null)return ["אפשר לשמור את הסגל גם לפני שיש תוצאה",false];
@@ -356,7 +371,7 @@ function editor(g){
     </div></div>`;
 }
 function renderAll(){
-  if(!canEdit){openKey=null;draft=null;form.hidden=true}
+  if(!canEdit){draft=null;form.hidden=true}
   addBtn.hidden=!canEdit||!form.hidden;
   renderRoster();renderStats();renderScorers();renderGames();
 }
@@ -384,7 +399,7 @@ async function removeDoc(k){
 }
 
 const onGameClick=async e=>{
-  const row=e.target.closest(".row");if(row){if(canEdit)openGame(row.dataset.k);return}
+  const row=e.target.closest(".row");if(row){if(canEdit)openGame(row.dataset.k);else{openKey=openKey===row.dataset.k?null:row.dataset.k;renderGames()}return}
   const b=e.target.closest("button");if(!b||!draft)return;
   if(b.dataset.pl!=null){const n=+b.dataset.pl,i=draft.squad.indexOf(n);i<0?draft.squad.push(n):draft.squad.splice(i,1);b.setAttribute("aria-pressed",String(i<0));updSquadLabel();return}
   if(b.id==="sqall"||b.id==="sqnone"){draft.squad=b.id==="sqall"?ROSTER.map(p=>p[0]):[];document.querySelectorAll(".edit .pchip").forEach(c=>c.setAttribute("aria-pressed",String(b.id==="sqall")));updSquadLabel();return}
