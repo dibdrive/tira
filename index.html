@@ -38,7 +38,7 @@ header.hero::after{content:"";position:absolute;inset:auto -60px -60px auto;widt
 header.hero::before{content:"";position:absolute;top:0;bottom:0;left:38%;border-left:2px solid rgba(255,255,255,.14)}
 .eyebrow{font-size:13px;letter-spacing:.04em;opacity:.85}
 h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,7vw,38px);margin:2px 0 14px;text-wrap:balance;position:relative}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative}
 .stat{background:rgba(255,255,255,.12);border-radius:12px;padding:8px 6px;text-align:center}
 .stat b{display:block;font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
 .stat span{font-size:12px;opacity:.9}
@@ -161,7 +161,7 @@ header.hero::before,header.hero::after{pointer-events:none}
     <div class="eyebrow">ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27</div>
     <h1>מ.כ. צעירי טירה</h1>
     <div class="stats" id="stats"></div>
-    <div class="stats-note">מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה</div>
+    <div class="stats-note">מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · <span id="playedNote"></span></div>
     <div class="sync" id="sync">טוען…</div>
     <div class="auth" id="auth"></div>
   </header>
@@ -256,13 +256,16 @@ const seq=(a,sep)=>a.map(v=>`<span>${v}</span>`).join(`<span>${sep}</span>`);
 function renderStats(){
   const s=tally(false);
   document.getElementById("stats").innerHTML=
-   `<div class="stat"><b>${s.p}/30</b><span>שוחקו</span></div>`+
-   `<div class="stat"><b class="duo">${seq([s.w,s.d,s.l],"–")}</b><span>נ-ת-ה</span></div>`+
-   `<div class="stat"><b class="duo">${seq([s.gf,s.ga],":")}</b><span>זכות:חובה</span></div>`+
+   `<div class="stat"><b>${s.w}</b><span>ניצחונות</span></div>`+
+   `<div class="stat"><b>${s.d}</b><span>תיקו</span></div>`+
+   `<div class="stat"><b>${s.l}</b><span>הפסדים</span></div>`+
+   `<div class="stat"><b>${s.gf}</b><span>שערי זכות</span></div>`+
+   `<div class="stat"><b>${s.ga}</b><span>שערי חובה</span></div>`+
    `<div class="stat"><b>${s.w*3+s.d}</b><span>נקודות</span></div>`;
   document.getElementById("leagueSum").textContent=`${s.p} מתוך 30 שוחקו`;
+  document.getElementById("playedNote").textContent=`שוחקו ${s.p} מתוך 30`;
   const c=tally(true),cn=allGames().filter(g=>g.comp==="cup").length;
-  document.getElementById("cupSum").textContent=cn?`${cn} משחקים · ${c.w} נ׳ · ${c.d} ת׳ · ${c.l} ה׳ · זכות ${c.gf} · חובה ${c.ga}`:"";
+  document.getElementById("cupSum").textContent=cn?`${cn} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`:"";
 }
 function renderScorers(){
   const m={};
