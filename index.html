@@ -146,6 +146,10 @@ section h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 
 .edit.view .pchip{cursor:default}
 .vres{display:flex;align-items:center;gap:10px}
 .vsc{line-height:1.8}
+.when{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.when label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;min-width:0}
+.when .txt{width:100%}
+.comp.moved{border-color:var(--loss);color:var(--loss)}
 #rosterNote{margin:6px 2px 0}
 .sumline{font-size:13px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .ghead{margin-top:6px}
@@ -202,7 +206,8 @@ header.hero::before,header.hero::after{pointer-events:none}
       <div class="grid">
         <label class="full">יריבה<input id="cOpp" required placeholder="שם הקבוצה היריבה"></label>
         <label>תאריך<input id="cDate" type="date" required></label>
-        <label>בית / חוץ<select id="cHome"><option value="1">בית</option><option value="0">חוץ</option></select></label>
+        <label>שעה<input id="cTime" type="time"></label>
+        <label class="full">בית / חוץ<select id="cHome"><option value="1">בית</option><option value="0">חוץ</option></select></label>
         <label class="full">שלב<input id="cStage" placeholder="למשל: סיבוב 2"></label>
       </div>
       <div class="hint" id="cHint"></div>
@@ -245,12 +250,12 @@ function outcome(x){if(!x||x.us==null||x.them==null)return null;return x.us>x.th
 const fmt=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
 function setSync(t){document.getElementById("sync").textContent=t}
 
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const fromIso=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
 function allGames(){
-  const cups=Object.entries(results).filter(([k,v])=>v&&v.comp==="cup"&&v.date).map(([k,v])=>{
-    const [y,m,d]=v.date.split("-").map(Number);
-    return {key:k,comp:"cup",o:v.opponent||"",home:!!v.home,stage:v.stage||"",date:new Date(y,m-1,d)};
-  });
-  return FIX.concat(cups).sort((a,b)=>a.date-b.date||(a.comp==="cup"?-1:1));
+  const league=FIX.map(g=>{const x=results[g.key];const nd=x&&x.date?fromIso(x.date):g.date;return {...g,date:nd,time:(x&&x.time)||"",moved:iso(nd)!==iso(g.date),origDate:g.date}});
+  const cups=Object.entries(results).filter(([k,v])=>v&&v.comp==="cup"&&v.date).map(([k,v])=>({key:k,comp:"cup",o:v.opponent||"",home:!!v.home,stage:v.stage||"",date:fromIso(v.date),time:v.time||""}));
+  return league.concat(cups).sort((a,b)=>a.date-b.date||(a.time||"99").localeCompare(b.time||"99")||(a.comp==="cup"?-1:1));
 }
 
 const isCup=x=>x&&x.comp==="cup";
@@ -317,7 +322,7 @@ function renderGames(){
       <button class="row" data-k="${g.key}" aria-expanded="${openKey===g.key}">
         ${rd}
         <span class="mid"><span class="opp">${esc(g.o)}</span>
-          <span class="meta"><span class="ha">${g.home?"בית":"חוץ"}</span><span>יום ${DAYS[g.date.getDay()]} · ${fmt(g.date)}</span>${g.comp==="cup"&&g.stage?`<span class="comp">${esc(g.stage)}</span>`:""}</span></span>
+          <span class="meta"><span class="ha">${g.home?"בית":"חוץ"}</span><span>יום ${DAYS[g.date.getDay()]} · ${fmt(g.date)}${g.time?` · שעה ${g.time}`:""}</span>${g.moved?`<span class="comp moved">מועד עודכן</span>`:""}${g.comp==="cup"&&g.stage?`<span class="comp">${esc(g.stage)}</span>`:""}</span></span>
         <span class="res">${right}</span>
       </button>
       ${(()=>{if(openKey===g.key||!x)return "";const parts=[];if(x.squad&&x.squad.length)parts.push(`👕 ${x.squad.length} בסגל`);if(x.captain!=null){const c=ROSTER.find(p=>p[0]===x.captain);if(c)parts.push(`Ⓒ ${esc(c[1])}`)}if(sc.length)parts.push(`⚽ ${sc.map(s=>esc(s.name)+(s.goals>1?` ×${s.goals}`:"")).join(" · ")}`);return parts.length?`<div class="sc-line">${parts.join(" · ")}</div>`:""})()}
@@ -349,7 +354,8 @@ function editor(g){
   const th=`<div class="team"><label for="them">${esc(g.o)}</label><input class="num" id="them" inputmode="numeric" type="number" min="0" max="99" value="${d.them??""}"></div>`;
   const [ht,warn]=hintText();
   return `<div class="edit">
-    <div class="hint">${g.comp==="cup"?"גביע":"ליגה"} · ${g.home?"משחק בית":"משחק חוץ"} · יום ${DAYS[g.date.getDay()]} ${fmt(g.date)}</div>
+    <div class="hint">${g.comp==="cup"?"גביע":"ליגה"} · ${g.home?"משחק בית":"משחק חוץ"}${g.moved?` · מועד מקורי: ${fmt(g.origDate)}`:""}</div>
+    <div class="when"><label for="gDate">תאריך<input class="txt" type="date" id="gDate" value="${d.date}"></label><label for="gTime">שעה<input class="txt" type="time" id="gTime" value="${d.time}"></label></div>
     <div class="board">${g.home?us:th}<span class="dash">:</span>${g.home?th:us}</div>
     <div class="sqhead"><span class="slabel">סגל למשחק · ${d.squad.length} שחקנים</span>
       <span class="sqbtns"><button class="lnk" id="sqall">בחר הכול</button><button class="lnk" id="sqnone">נקה</button></span></div>
@@ -376,10 +382,11 @@ function renderAll(){
   renderRoster();renderStats();renderScorers();renderGames();
 }
 
+function gameByKey(k){return allGames().find(g=>g.key===k)}
 function openGame(k){
   if(openKey===k){openKey=null;draft=null;renderGames();return}
   openKey=k;const x=results[k]||{};
-  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null};
+  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null,date:iso(gameByKey(k).date),time:gameByKey(k).time||""};
   renderGames();
   document.getElementById("g-"+k).scrollIntoView({block:"nearest",behavior:"smooth"});
 }
@@ -412,7 +419,7 @@ const onGameClick=async e=>{
   if(b.id==="save"){
     if((draft.us==null)!==(draft.them==null)){const h=document.querySelector(".edit .status");h.textContent="צריך להזין את שתי התוצאות, או להשאיר את שתיהן ריקות";h.classList.add("warn");return}
     const base=results[k]&&results[k].comp==="cup"?{...results[k]}:{round:+k.slice(1)};
-    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
+    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,date:draft.date,time:draft.time||"",scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
     b.disabled=true;b.textContent="שומר…";
     openKey=null;draft=null;await writeDoc(k,rec);renderAll();return}
   if(b.id==="clear"){openKey=null;draft=null;await removeDoc(k);renderAll();return}
@@ -425,6 +432,8 @@ const onGameInput=e=>{
   if(t.id==="us")draft.us=num(t.value);
   else if(t.id==="them")draft.them=num(t.value);
   else if(t.id==="cap"){draft.captain=t.value?+t.value:null;return}
+  else if(t.id==="gDate"){if(t.value)draft.date=t.value;return}
+  else if(t.id==="gTime"){draft.time=t.value;return}
   else if(t.dataset.i!=null)draft.scorers[+t.dataset.i].name=t.value;
   const h=document.querySelector(".edit .status");if(h){const [ht,w]=hintText();h.textContent=ht;h.classList.toggle("warn",w)}
 };
@@ -437,7 +446,7 @@ form.addEventListener("submit",async e=>{
   const opp=document.getElementById("cOpp").value.trim(),date=document.getElementById("cDate").value;
   if(!opp||!date){document.getElementById("cHint").textContent="צריך יריבה ותאריך";return}
   const k="c"+date.replaceAll("-","")+Math.random().toString(36).slice(2,6);
-  await writeDoc(k,{comp:"cup",opponent:opp,date,home:document.getElementById("cHome").value==="1",stage:document.getElementById("cStage").value.trim(),us:null,them:null,scorers:[]});
+  await writeDoc(k,{comp:"cup",opponent:opp,date,time:document.getElementById("cTime").value||"",home:document.getElementById("cHome").value==="1",stage:document.getElementById("cStage").value.trim(),us:null,them:null,scorers:[]});
   form.reset();form.hidden=true;addBtn.hidden=false;document.getElementById("cHint").textContent="";renderAll();
 });
 
