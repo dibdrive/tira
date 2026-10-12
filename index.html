@@ -219,8 +219,8 @@ header.hero::before,header.hero::after{pointer-events:none}
 <script>
 const T = "מ.כ. צעירי טירה";
 const FIX = [
- [1,"14/10/26","שמשון בני טייבה",1],[2,"17/10/26","איחוד בני בקה",0],
- [3,"28/10/26","בית\"ר כ\"ס שלומי",1],[4,"31/10/26","הפועל עליה כפר סבא 2",0],
+ [1,"18/10/26","שמשון בני טייבה",1,"19:30","14/10/26"],[2,"28/10/26","איחוד בני בקה",0,"","17/10/26"],
+ [3,"31/10/26","בית\"ר כ\"ס שלומי",1,"","28/10/26"],[4,"14/11/26","הפועל עליה כפר סבא 2",0,"","31/10/26"],
  [5,"28/11/26","מ.כ. טייבה",1],[6,"05/12/26","מ.כ. בני רעננה",0],
  [7,"19/12/26","בני הרצליה",1],[8,"26/12/26","מ.כ.ע אריאל 2",1],
  [9,"09/01/27","מ.ס. טירה",0],[10,"16/01/27","הפועל חדרה מערב",1],
@@ -234,7 +234,7 @@ const FIX = [
  [25,"01/05/27","הפועל חדרה מערב",0],[26,"08/05/27","הפועל אורנית",1],
  [27,"15/05/27","מכבי השרון נתניה",0],[28,"18/05/27","מ.ס. איחוד דרום השרון מערב",1],
  [29,"22/05/27","מ.ס. קדימה צורן 2",0],[30,"29/05/27","הפועל כפר קאסם שועאע 2",1]
-].map(([r,d,o,h])=>{const [dd,mm,yy]=d.split("/").map(Number);return {key:"r"+r,comp:"league",r,o,home:!!h,date:new Date(2000+yy,mm-1,dd)}});
+].map(([r,d,o,h,tm,od])=>{const pd=s=>{const [dd,mm,yy]=s.split("/").map(Number);return new Date(2000+yy,mm-1,dd)};return {key:"r"+r,comp:"league",r,o,home:!!h,date:pd(d),time:tm||"",orig:od?pd(od):null}});
 const ROSTER=[[1,"כרים עתילי","שוער"],[2,"חמזה פדילה"],[4,"נדים מנסור"],[5,"אבראהים נאסר"],[7,"מוחמד עבד אלחי"],[8,"יוסף בשארה"],[9,"מוחמד עבד אל חי"],[10,"זוהיר נאסר"],[11,"אדם סולטאן"],[12,"כארם כורי"],[14,"עבד אלפתאח פדילה"],[15,"איהם ראבי"],[17,"מוחמד יאסין"],[19,"סנד שתיווי"],[20,"סובחי סולטאן"],[41,"נסר דעאס"],[80,"עבד אל רחים חסקיה"],[99,"יוסף עבד אל חי","שוער"]];
 const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 const MONTHS=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
@@ -253,7 +253,7 @@ function setSync(t){document.getElementById("sync").textContent=t}
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const fromIso=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
 function allGames(){
-  const league=FIX.map(g=>{const x=results[g.key];const nd=x&&x.date?fromIso(x.date):g.date;return {...g,date:nd,time:(x&&x.time)||"",moved:iso(nd)!==iso(g.date),origDate:g.date}});
+  const league=FIX.map(g=>{const x=results[g.key];const nd=x&&x.date?fromIso(x.date):g.date;const od=g.orig||g.date;return {...g,date:nd,time:(x&&x.time)||g.time||"",moved:iso(nd)!==iso(od),origDate:od}});
   const cups=Object.entries(results).filter(([k,v])=>v&&v.comp==="cup"&&v.date).map(([k,v])=>({key:k,comp:"cup",o:v.opponent||"",home:!!v.home,stage:v.stage||"",date:fromIso(v.date),time:v.time||""}));
   return league.concat(cups).sort((a,b)=>a.date-b.date||(a.time||"99").localeCompare(b.time||"99")||(a.comp==="cup"?-1:1));
 }
