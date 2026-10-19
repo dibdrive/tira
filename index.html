@@ -396,7 +396,8 @@ function venueInfo(g){
   if(g.home)return {label:LANG==="ar"?"ملعب الطيرة":HOME_VENUE,q:HOME_VENUE};
   const tw=TOWN[g.o];return tw?{label:t("wazeTown",LANG==="ar"?tw[1]:tw[0]),q:"מגרש כדורגל "+tw[0],town:true}:null;
 }
-function venueLink(g){const v=venueInfo(g);if(!v)return "";return `<a class="waze" href="https://waze.com/ul?q=${encodeURIComponent(v.q)}&navigate=yes" target="_blank" rel="noopener">🧭 ${esc(v.town?v.label:v.label+" · "+t("waze"))}</a>`}
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a.waze[data-wq]");if(!a||!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))return;e.preventDefault();const q=encodeURIComponent(a.dataset.wq),web="https://waze.com/ul?q="+q+"&navigate=yes";let gone=false;const h=()=>{if(document.hidden)gone=true};document.addEventListener("visibilitychange",h);if(/Android/i.test(navigator.userAgent)){location.href="intent://?q="+q+"&navigate=yes#Intent;scheme=waze;package=com.waze;S.browser_fallback_url="+encodeURIComponent(web)+";end";}else{location.href="waze://?q="+q+"&navigate=yes";setTimeout(()=>{document.removeEventListener("visibilitychange",h);if(!gone&&!document.hidden)location.href=web},1500);}});
+function venueLink(g){const v=venueInfo(g);if(!v)return "";return `<a class="waze" href="https://waze.com/ul?q=${encodeURIComponent(v.q)}&navigate=yes" data-wq="${esc(v.q)}" target="_blank" rel="noopener">🧭 ${esc(v.town?v.label:v.label+" · "+t("waze"))}</a>`}
 
 const isCup=x=>x&&x.comp==="cup";
 function tally(cup){
