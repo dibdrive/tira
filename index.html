@@ -215,6 +215,11 @@ dialog#pdlg::backdrop{background:rgba(10,15,30,.55)}
 .pnb{position:absolute;bottom:-2px;inset-inline-start:-4px;min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:var(--pitch);color:var(--pitch-ink);display:grid;place-items:center;font-family:var(--display);font-size:16px;border:2px solid var(--surface)}
 .locrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 4px}
 .locrow .hint{font-size:13px;color:var(--muted)}
+.staff{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px}
+.staff .sp{display:flex;align-items:center;gap:12px}
+.staff img{width:60px;height:60px;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid var(--pitch);background:var(--chalk);flex:none}
+.staff b{display:block;font-family:var(--display);font-weight:400;font-size:19px}
+.staff span{font-size:13px;font-weight:700;color:var(--pitch)}
 .prole{font-size:12px;font-weight:700;color:var(--pitch);border:1px solid var(--pitch);border-radius:99px;padding:0 8px}
 .pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pstats div{background:var(--chalk);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
@@ -272,6 +277,7 @@ header.hero::before,header.hero::after{pointer-events:none}
     <h2 data-t="rosterH">סגל הקבוצה</h2>
     <ul class="roster" id="roster"></ul>
     <p class="hint" id="rosterNote"></p>
+    <div class="staff" id="staff"></div>
   </section>
 
   <section>
@@ -331,7 +337,7 @@ const S={
 he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27",
  wins:"ניצחונות",draws:"תיקו",losses:"הפסדים",gf:"שערי זכות",ga:"שערי חובה",pts:"נקודות",
  statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך 30`,
- sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
+ sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
  leagueSum:p=>`${p} מתוך 30 שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
  days:["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"],day:d=>`יום ${d}`,
  months:["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
@@ -351,7 +357,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
 ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشارون 2 · كأس الأولاد ب׳ · موسم 2026/27",
  wins:"فوز",draws:"تعادل",losses:"خسارة",gf:"أهداف لنا",ga:"أهداف علينا",pts:"نقاط",
  statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من 30`,
- sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
+ sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
  leagueSum:p=>`لُعبت ${p} من 30`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
  days:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],day:d=>d,
  months:["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"],
@@ -452,7 +458,10 @@ function renderScorers(){
   el.innerHTML=`<table class="sctab"><thead><tr><th></th><th>${t("player")}</th><th>${t("league")}</th><th>${t("cup")}</th><th>${t("total")}</th></tr></thead><tbody>`+
     list.map(([n,l,c,tt],i)=>{if(tt!==prev){rank=i+1;prev=tt}const no=noOf(n);return `<tr${no!=null?` data-player="${no}" class="clk"`:""}><td class="rank">${rank}</td><td class="nm">${esc(dispName(n))}</td><td>${l}</td><td>${c}</td><td class="tot">${tt}</td></tr>`}).join("")+`</tbody></table>`;
 }
+const STAFF=[{he:"מוחמד עיסווי",ar:"محمد عيساوي",role:"coachRole",img:342751}];
+function renderStaff(){const el=document.getElementById("staff");if(!el)return;el.innerHTML=STAFF.map(s=>`<div class="sp"><img src="https://www.football.org.il/ImageServer/GetImage.ashx?type=2&id=${s.img}&width=200&height=190" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><div><b>${esc(LANG==="ar"?s.ar:s.he)}</b><span>${t(s.role)}</span></div></div>`).join("")}
 function renderRoster(){
+  renderStaff();
   const apps={};let tracked=0;
   for(const k in results){const sq=results[k].squad;if(sq&&sq.length){tracked++;sq.forEach(n=>apps[n]=(apps[n]||0)+1)}}
   document.getElementById("roster").innerHTML=ROSTER.map(p=>`<li><button class="pl" data-player="${p[0]}">${photo(p[0])?`<img class="av" src="${photo(p[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:`<span class="av"></span>`}<span class="no">${p[0]}</span><span class="rn">${esc(pName(p[0]))}</span>${p[2]?`<em>${t("gk")}</em>`:""}${tracked?`<span class="apps">${apps[p[0]]||0}/${tracked}</span>`:""}</button></li>`).join("");
