@@ -209,6 +209,10 @@ dialog#pdlg::backdrop{background:rgba(10,15,30,.55)}
 .phead h3{margin:0;font-family:var(--display);font-weight:400;font-size:24px}
 .phead > div{flex:1;min-width:0}
 .pno{width:52px;height:52px;border-radius:14px;background:var(--pitch);color:var(--pitch-ink);display:grid;place-items:center;font-family:var(--display);font-size:26px;flex:none}
+.av{width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:center 20%;flex:none;background:var(--chalk);border:1px solid var(--line)}
+.pph{position:relative;flex:none}
+.pph img{display:block;width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid var(--pitch);background:var(--chalk)}
+.pnb{position:absolute;bottom:-2px;inset-inline-start:-4px;min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:var(--pitch);color:var(--pitch-ink);display:grid;place-items:center;font-family:var(--display);font-size:16px;border:2px solid var(--surface)}
 .prole{font-size:12px;font-weight:700;color:var(--pitch);border:1px solid var(--pitch);border-radius:99px;padding:0 8px}
 .pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pstats div{background:var(--chalk);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
@@ -311,6 +315,8 @@ const FIX = [
  [27,"15/05/27","מכבי השרון נתניה",0],[28,"18/05/27","מ.ס. איחוד דרום השרון מערב",1],
  [29,"22/05/27","מ.ס. קדימה צורן 2",0],[30,"29/05/27","הפועל כפר קאסם שועאע 2",1]
 ].map(([r,d,o,h,tm,od])=>{const pd=s=>{const [dd,mm,yy]=s.split("/").map(Number);return new Date(2000+yy,mm-1,dd)};return {key:"r"+r,comp:"league",r,o,home:!!h,date:pd(d),time:tm||"",orig:od?pd(od):null}});
+const PHOTO={1:966326,2:611244,4:1030927,5:966316,7:1008095,8:966315,9:966320,10:1031578,11:966324,12:966327,15:989012,19:966335,20:966319,41:966325,99:966321};
+const photo=no=>PHOTO[no]?`https://www.football.org.il/ImageServer/GetImage.ashx?type=2&id=${PHOTO[no]}&width=200&height=190`:"";
 const ROSTER=[[1,"כרים עתילי","שוער"],[2,"חמזה פדילה"],[4,"נדים מנסור"],[5,"אבראהים נאסר"],[7,"מוחמד עבד אלחי"],[8,"יוסף בשארה"],[9,"מוחמד עבד אל חי"],[10,"זוהיר נאסר"],[11,"אדם סולטאן"],[12,"כארם כורי"],[14,"עבד אלפתאח פדילה"],[15,"איהם ראבי"],[17,"מוחמד יאסין"],[19,"סנד שתיווי"],[20,"סובחי סולטאן"],[41,"נסר דעאס"],[80,"עבד אל רחים חסקיה"],[99,"יוסף עבד אל חי","שוער"]];
 const AR_NAMES={1:"كريم عتيلي",2:"حمزة فضيلة",4:"نديم منصور",5:"إبراهيم ناصر",7:"محمد عبد الحي",8:"يوسف بشارة",9:"محمد عبد الحي",10:"زهير ناصر",11:"آدم سلطان",12:"كرم خوري",14:"عبد الفتاح فضيلة",15:"أيهم رابي",17:"محمد ياسين",19:"سند شتيوي",20:"صبحي سلطان",41:"نصر دعاس",80:"عبد الرحيم حاسكية",99:"يوسف عبد الحي"};
 const OPP_AR={"שמשון בני טייבה":"شمشون أبناء الطيبة","איחוד בני בקה":"اتحاد أبناء باقة","בית\"ר כ\"ס שלומי":"بيتار كفار سابا شلومي","הפועל עליה כפר סבא 2":"هبوعيل عاليا كفار سابا 2","מ.כ. טייבה":"ن.ك الطيبة","מ.כ. בני רעננה":"ن.ك أبناء رعنانا","בני הרצליה":"أبناء هرتسليا","מ.כ.ע אריאל 2":"ن.ك أريئيل 2","מ.ס. טירה":"م.س الطيرة","הפועל חדרה מערב":"هبوعيل الخضيرة الغربية","הפועל אורנית":"هبوعيل أورانيت","מכבי השרון נתניה":"مكابي هشارون نتانيا","מ.ס. איחוד דרום השרון מערב":"م.س اتحاد جنوب الشارون الغربي","מ.ס. קדימה צורן 2":"م.س كديما تسوران 2","הפועל כפר קאסם שועאע 2":"هبوعيل كفر قاسم شعاع 2","הפועל כפר סבא מערב":"هبوعيل كفار سابا الغربية","הפועל כפ״ס אור":"هبوعيل كفار سابا أور"};
@@ -436,7 +442,7 @@ function renderScorers(){
 function renderRoster(){
   const apps={};let tracked=0;
   for(const k in results){const sq=results[k].squad;if(sq&&sq.length){tracked++;sq.forEach(n=>apps[n]=(apps[n]||0)+1)}}
-  document.getElementById("roster").innerHTML=ROSTER.map(p=>`<li><button class="pl" data-player="${p[0]}"><span class="no">${p[0]}</span><span class="rn">${esc(pName(p[0]))}</span>${p[2]?`<em>${t("gk")}</em>`:""}${tracked?`<span class="apps">${apps[p[0]]||0}/${tracked}</span>`:""}</button></li>`).join("");
+  document.getElementById("roster").innerHTML=ROSTER.map(p=>`<li><button class="pl" data-player="${p[0]}">${photo(p[0])?`<img class="av" src="${photo(p[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:`<span class="av"></span>`}<span class="no">${p[0]}</span><span class="rn">${esc(pName(p[0]))}</span>${p[2]?`<em>${t("gk")}</em>`:""}${tracked?`<span class="apps">${apps[p[0]]||0}/${tracked}</span>`:""}</button></li>`).join("");
   document.getElementById("rosterNote").textContent=(tracked?t("apps",tracked)+" · ":"")+t("tapPlayer");
 }
 function refreshCap(){const sel=document.getElementById("cap");if(!sel)return;const list=draft.squad.length?ROSTER.filter(p=>draft.squad.includes(p[0])):ROSTER;sel.innerHTML=`<option value="">לא נבחר</option>`+list.map(p=>`<option value="${p[0]}"${draft.captain===p[0]?" selected":""}>${p[0]} · ${esc(p[1])}</option>`).join("")}
@@ -640,7 +646,7 @@ function openPlayer(no){
   }
   pdlg.dataset.no=no;
   pdlg.innerHTML=`<div class="pcard">
-    <div class="phead"><span class="pno">${no}</span><div><h3>${esc(pName(no))}</h3>${p[2]?`<span class="prole">${t("gk")}</span>`:""}</div><button class="x" id="pclose" aria-label="${t("close")}">×</button></div>
+    <div class="phead">${photo(no)?`<span class="pph"><img src="${photo(no)}" alt="" referrerpolicy="no-referrer"><span class="pnb">${no}</span></span>`:`<span class="pno">${no}</span>`}<div><h3>${esc(pName(no))}</h3>${p[2]?`<span class="prole">${t("gk")}</span>`:""}</div><button class="x" id="pclose" aria-label="${t("close")}">×</button></div>
     <div class="pstats"><div><b>${inSq}</b><span>${t("pGames")}</span></div><div><b>${gl+gc}</b><span>${t("pGoals")}${gc?` (${t("league")} ${gl} · ${t("cup")} ${gc})`:""}</span></div><div><b>${capt}</b><span>${t("pCapt")}</span></div></div>
     <div class="slabel">${t("pList")}</div>
     ${rows.length?`<ol class="plist">${rows.join("")}</ol>`:`<p class="empty">${t("pNone")}</p>`}
