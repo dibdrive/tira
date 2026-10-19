@@ -391,7 +391,7 @@ function setSync(k){syncKey=k;document.getElementById("sync").textContent=k?t(k)
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const fromIso=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
 function allGames(){
-  const league=FIX.map(g=>{const x=results[g.key];const nd=x&&x.date?fromIso(x.date):g.date;const od=g.orig||g.date;return {...g,date:nd,time:(x&&x.time)||g.time||"",moved:iso(nd)!==iso(od),origDate:od}});
+  const league=FIX.map(g=>{const x=results[g.key];const nd=x&&x.date?fromIso(x.date):g.date;const od=g.orig||g.date;return {...g,home:x&&typeof x.home==="boolean"?x.home:g.home,date:nd,time:(x&&x.time)||g.time||"",moved:iso(nd)!==iso(od),origDate:od}});
   const cups=Object.entries(results).filter(([k,v])=>v&&v.comp==="cup"&&v.date).map(([k,v])=>({key:k,comp:"cup",o:v.opponent||"",home:!!v.home,stage:v.stage||"",date:fromIso(v.date),time:v.time||""}));
   cups.sort((a,b)=>a.date-b.date).forEach((g,i)=>{const m=(g.stage||"").match(/\d+/);g.cr=m?+m[0]:i+1;g.stageTxt=g.stage&&!/^\s*סיבוב\s*\d+\s*$/.test(g.stage)?g.stage:""});
   return league.concat(cups).sort((a,b)=>a.date-b.date||(a.time||"99").localeCompare(b.time||"99")||(a.comp==="cup"?-1:1));
@@ -536,6 +536,7 @@ function editor(g){
   return `<div class="edit">
     <div class="hint">${g.comp==="cup"?"גביע":"ליגה"} · ${g.home?"משחק בית":"משחק חוץ"}${g.moved?` · מועד מקורי: ${fmt(g.origDate)}`:""}</div>
     <div class="when"><label for="gDate">תאריך<input class="txt" type="date" id="gDate" value="${d.date}"></label><label for="gTime">שעה<input class="txt" type="time" id="gTime" value="${d.time}"></label></div>
+    <label class="slabel caprow" for="gHome">בית / חוץ<select class="txt" id="gHome"><option value="1"${d.home?" selected":""}>בית</option><option value="0"${d.home?"":" selected"}>חוץ</option></select></label>
     <label class="slabel caprow" for="gVenue">מגרש (לניווט בוויז)<input class="txt" id="gVenue" value="${esc(d.venue||"")}" placeholder="${g.home?HOME_VENUE:"למשל: אצטדיון "+((TOWN[g.o]||[""])[0])}"></label>
     <label class="slabel caprow" for="gLoc">מיקום מדויק (לא חובה)<input class="txt" id="gLoc" dir="ltr" value="${esc(d.locRaw||"")}" placeholder="קישור מ-Waze / Google Maps או קואורדינטות"></label>
     <div class="locrow"><button type="button" class="btn sm" id="gLocMe">📍 אני במגרש עכשיו</button><span class="hint" id="locHint">${d.locRaw?(parseLoc(d.locRaw)?"✓ נקודה זוהתה":"⚠ לא זוהה מיקום בקישור"):""}</span></div>
@@ -571,7 +572,7 @@ function gameByKey(k){return allGames().find(g=>g.key===k)}
 function openGame(k){
   if(openKey===k){openKey=null;draft=null;renderGames();return}
   openKey=k;const x=results[k]||{},g=gameByKey(k);
-  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null,date:iso(g.date),time:g.time||"",venue:x.venue||"",locRaw:x.loc||"",stage:x.stage||(g.comp==="cup"?"סיבוב "+g.cr:"")};
+  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null,date:iso(g.date),time:g.time||"",home:!!g.home,venue:x.venue||"",locRaw:x.loc||"",stage:x.stage||(g.comp==="cup"?"סיבוב "+g.cr:"")};
   renderGames();
   document.getElementById("g-"+k).scrollIntoView({block:"nearest",behavior:"smooth"});
 }
@@ -607,7 +608,7 @@ const onGameClick=async e=>{
   if(b.id==="save"||b.id==="golive"){
     if((draft.us==null)!==(draft.them==null)){const h=document.querySelector(".edit .status");h.textContent="צריך להזין את שתי התוצאות, או להשאיר את שתיהן ריקות";h.classList.add("warn");return}
     const base=results[k]?{...results[k]}:{round:+k.slice(1)};
-    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,date:draft.date,time:draft.time||"",venue:(draft.venue||"").trim(),loc:parseLoc(draft.locRaw)||"",scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
+    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,date:draft.date,time:draft.time||"",home:!!draft.home,venue:(draft.venue||"").trim(),loc:parseLoc(draft.locRaw)||"",scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
     if(rec.comp==="cup")rec.stage=(draft.stage||"").trim();
     if(b.id==="golive")rec.live={st:"pre"};
     b.disabled=true;b.textContent="שומר…";
@@ -624,6 +625,7 @@ const onGameInput=e=>{
   else if(tg.id==="cap"){draft.captain=tg.value?+tg.value:null;return}
   else if(tg.id==="gDate"){if(tg.value)draft.date=tg.value;return}
   else if(tg.id==="gTime"){draft.time=tg.value;return}
+  else if(tg.id==="gHome"){draft.home=tg.value==="1";return}
   else if(tg.id==="gVenue"){draft.venue=tg.value;return}
   else if(tg.id==="gLoc"){draft.locRaw=tg.value;const lh=document.getElementById("locHint");if(lh)lh.textContent=tg.value.trim()?(parseLoc(tg.value)?"✓ נקודה זוהתה":"⚠ לא זוהה מיקום. בגוגל מפות: לחיצה ארוכה על המגרש ← העתק את המספרים שמופיעים למעלה"):"";return}
   else if(tg.id==="gStage"){draft.stage=tg.value;return}
