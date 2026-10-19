@@ -213,6 +213,8 @@ dialog#pdlg::backdrop{background:rgba(10,15,30,.55)}
 .pph{position:relative;flex:none}
 .pph img{display:block;width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid var(--pitch);background:var(--chalk)}
 .pnb{position:absolute;bottom:-2px;inset-inline-start:-4px;min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:var(--pitch);color:var(--pitch-ink);display:grid;place-items:center;font-family:var(--display);font-size:16px;border:2px solid var(--surface)}
+.locrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 4px}
+.locrow .hint{font-size:13px;color:var(--muted)}
 .prole{font-size:12px;font-weight:700;color:var(--pitch);border:1px solid var(--pitch);border-radius:99px;padding:0 8px}
 .pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pstats div{background:var(--chalk);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
@@ -396,14 +398,25 @@ function allGames(){
 }
 const compLabel=g=>g.comp==="cup"?`${t("cup")} · ${g.stageTxt?esc(g.stageTxt):t("cupRound")+" "+g.cr}`:`${t("league")} · ${t("round")} ${g.r}`;
 const whenLabel=g=>`${t("day",DAYS()[g.date.getDay()])} · ${fmt(g.date)}${g.time?` · ${t("at")} ${g.time}`:""}`;
+function geohashDecode(h){const B="0123456789bcdefghjkmnpqrstuvwxyz";let ev=true,la=[-90,90],lo=[-180,180];for(const ch of h){const d=B.indexOf(ch);if(d<0)return null;for(let m=16;m;m>>=1){const r=ev?lo:la;const mid=(r[0]+r[1])/2;if(d&m)r[0]=mid;else r[1]=mid;ev=!ev}}return [(la[0]+la[1])/2,(lo[0]+lo[1])/2]}
+function parseLoc(s){
+  s=(s||"").trim();if(!s)return null;try{s=decodeURIComponent(s)}catch(e){}
+  const ok=(a,b)=>{a=+a;b=+b;return isFinite(a)&&isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180&&(a||b)?`${a.toFixed(6)},${b.toFixed(6)}`:null};
+  let m=s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);if(m)return ok(m[1],m[2]);
+  m=s.match(/(?:[?&](?:ll|q|query|destination|daddr|center)=|@)(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);if(m)return ok(m[1],m[2]);
+  m=s.match(/waze\.com\/ul\/h([0-9b-hjkmnp-z]{5,12})/i);if(m){const p=geohashDecode(m[1].toLowerCase());return p?ok(p[0],p[1]):null}
+  m=s.match(/^(-?\d{1,3}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)$/);if(m)return ok(m[1],m[2]);
+  return null;
+}
 function venueInfo(g){
   const x=results[g.key]||{};
+  if(x.loc)return {label:x.venue||(g.home?(LANG==="ar"?"ملعب الطيرة":HOME_VENUE):t("venue")),wz:"ll="+x.loc};
   if(x.venue)return {label:x.venue,q:x.venue};
   if(g.home)return {label:LANG==="ar"?"ملعب الطيرة":HOME_VENUE,q:HOME_VENUE};
   const tw=TOWN[g.o];return tw?{label:t("wazeTown",LANG==="ar"?tw[1]:tw[0]),q:"מגרש כדורגל "+tw[0],town:true}:null;
 }
-document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a.waze[data-wq]");if(!a||!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))return;e.preventDefault();const q=encodeURIComponent(a.dataset.wq),web="https://waze.com/ul?q="+q+"&navigate=yes";let gone=false;const h=()=>{if(document.hidden)gone=true};document.addEventListener("visibilitychange",h);if(/Android/i.test(navigator.userAgent)){location.href="intent://?q="+q+"&navigate=yes#Intent;scheme=waze;package=com.waze;S.browser_fallback_url="+encodeURIComponent(web)+";end";}else{location.href="waze://?q="+q+"&navigate=yes";setTimeout(()=>{document.removeEventListener("visibilitychange",h);if(!gone&&!document.hidden)location.href=web},1500);}});
-function venueLink(g){const v=venueInfo(g);if(!v)return "";return `<a class="waze" href="https://waze.com/ul?q=${encodeURIComponent(v.q)}&navigate=yes" data-wq="${esc(v.q)}" target="_blank" rel="noopener">🧭 ${esc(v.town?v.label:v.label+" · "+t("waze"))}</a>`}
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a.waze[data-wq],a.waze[data-wz]");if(!a||!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))return;e.preventDefault();const q=a.dataset.wz||("q="+encodeURIComponent(a.dataset.wq)),web="https://waze.com/ul?"+q+"&navigate=yes";let gone=false;const h=()=>{if(document.hidden)gone=true};document.addEventListener("visibilitychange",h);if(/Android/i.test(navigator.userAgent)){location.href="intent://?"+q+"&navigate=yes#Intent;scheme=waze;package=com.waze;S.browser_fallback_url="+encodeURIComponent(web)+";end";}else{location.href="waze://?"+q+"&navigate=yes";setTimeout(()=>{document.removeEventListener("visibilitychange",h);if(!gone&&!document.hidden)location.href=web},1500);}});
+function venueLink(g){const v=venueInfo(g);if(!v)return "";const p=v.wz||("q="+encodeURIComponent(v.q));return `<a class="waze" href="https://waze.com/ul?${p}&navigate=yes" data-wz="${esc(p)}" target="_blank" rel="noopener">🧭 ${esc(v.town?v.label:v.label+" · "+t("waze"))}</a>`}
 
 const isCup=x=>x&&x.comp==="cup";
 function tally(cup){
@@ -524,6 +537,8 @@ function editor(g){
     <div class="hint">${g.comp==="cup"?"גביע":"ליגה"} · ${g.home?"משחק בית":"משחק חוץ"}${g.moved?` · מועד מקורי: ${fmt(g.origDate)}`:""}</div>
     <div class="when"><label for="gDate">תאריך<input class="txt" type="date" id="gDate" value="${d.date}"></label><label for="gTime">שעה<input class="txt" type="time" id="gTime" value="${d.time}"></label></div>
     <label class="slabel caprow" for="gVenue">מגרש (לניווט בוויז)<input class="txt" id="gVenue" value="${esc(d.venue||"")}" placeholder="${g.home?HOME_VENUE:"למשל: אצטדיון "+((TOWN[g.o]||[""])[0])}"></label>
+    <label class="slabel caprow" for="gLoc">מיקום מדויק (לא חובה)<input class="txt" id="gLoc" dir="ltr" value="${esc(d.locRaw||"")}" placeholder="קישור מ-Waze / Google Maps או קואורדינטות"></label>
+    <div class="locrow"><button type="button" class="btn sm" id="gLocMe">📍 אני במגרש עכשיו</button><span class="hint" id="locHint">${d.locRaw?(parseLoc(d.locRaw)?"✓ נקודה זוהתה":"⚠ לא זוהה מיקום בקישור"):""}</span></div>
     ${g.comp==="cup"?`<label class="slabel caprow" for="gStage">סיבוב / שלב<input class="txt" id="gStage" value="${esc(d.stage||"")}" placeholder="למשל: סיבוב 2"></label>`:""}
     <div class="board">${g.home?us:th}<span class="dash">:</span>${g.home?th:us}</div>
     <div class="sqhead"><span class="slabel">סגל למשחק · ${d.squad.length} שחקנים</span>
@@ -556,7 +571,7 @@ function gameByKey(k){return allGames().find(g=>g.key===k)}
 function openGame(k){
   if(openKey===k){openKey=null;draft=null;renderGames();return}
   openKey=k;const x=results[k]||{},g=gameByKey(k);
-  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null,date:iso(g.date),time:g.time||"",venue:x.venue||"",stage:x.stage||(g.comp==="cup"?"סיבוב "+g.cr:"")};
+  draft={us:x.us??null,them:x.them??null,scorers:(x.scorers||[]).map(s=>({...s})),squad:[...(x.squad||[])],captain:x.captain??null,date:iso(g.date),time:g.time||"",venue:x.venue||"",locRaw:x.loc||"",stage:x.stage||(g.comp==="cup"?"סיבוב "+g.cr:"")};
   renderGames();
   document.getElementById("g-"+k).scrollIntoView({block:"nearest",behavior:"smooth"});
 }
@@ -576,6 +591,7 @@ async function removeDoc(k){
 }
 
 const onGameClick=async e=>{
+  const lm=e.target.closest("#gLocMe");if(lm&&draft){const lh=document.getElementById("locHint");if(!navigator.geolocation){lh.textContent="הדפדפן לא תומך במיקום";return}lh.textContent="מאתר מיקום…";navigator.geolocation.getCurrentPosition(p=>{draft.locRaw=`${p.coords.latitude.toFixed(6)},${p.coords.longitude.toFixed(6)}`;const i=document.getElementById("gLoc");if(i)i.value=draft.locRaw;lh.textContent=`✓ נקודה נשמרה (דיוק ~${Math.round(p.coords.accuracy)} מ׳) – לחץ שמור`},er=>{lh.textContent="לא התקבל מיקום – צריך לאשר גישה למיקום"},{enableHighAccuracy:true,timeout:15000});return}
   const sh=e.target.closest("[data-share]");if(sh){shareResult(sh.dataset.share,sh);return}
   const pl=e.target.closest("[data-player]");if(pl&&!(draft&&openKey)){openPlayer(+pl.dataset.player);return}
   const row=e.target.closest(".row");if(row){if(canEdit)openGame(row.dataset.k);else{openKey=openKey===row.dataset.k?null:row.dataset.k;renderGames()}return}
@@ -591,7 +607,7 @@ const onGameClick=async e=>{
   if(b.id==="save"||b.id==="golive"){
     if((draft.us==null)!==(draft.them==null)){const h=document.querySelector(".edit .status");h.textContent="צריך להזין את שתי התוצאות, או להשאיר את שתיהן ריקות";h.classList.add("warn");return}
     const base=results[k]?{...results[k]}:{round:+k.slice(1)};
-    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,date:draft.date,time:draft.time||"",venue:(draft.venue||"").trim(),scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
+    const rec={...base,us:draft.us,them:draft.them,squad:[...draft.squad].sort((a,b)=>a-b),captain:draft.captain,date:draft.date,time:draft.time||"",venue:(draft.venue||"").trim(),loc:parseLoc(draft.locRaw)||"",scorers:draft.scorers.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),goals:s.goals}))};
     if(rec.comp==="cup")rec.stage=(draft.stage||"").trim();
     if(b.id==="golive")rec.live={st:"pre"};
     b.disabled=true;b.textContent="שומר…";
@@ -609,6 +625,7 @@ const onGameInput=e=>{
   else if(tg.id==="gDate"){if(tg.value)draft.date=tg.value;return}
   else if(tg.id==="gTime"){draft.time=tg.value;return}
   else if(tg.id==="gVenue"){draft.venue=tg.value;return}
+  else if(tg.id==="gLoc"){draft.locRaw=tg.value;const lh=document.getElementById("locHint");if(lh)lh.textContent=tg.value.trim()?(parseLoc(tg.value)?"✓ נקודה זוהתה":"⚠ לא זוהה מיקום. בגוגל מפות: לחיצה ארוכה על המגרש ← העתק את המספרים שמופיעים למעלה"):"";return}
   else if(tg.id==="gStage"){draft.stage=tg.value;return}
   else if(tg.dataset.i!=null)draft.scorers[+tg.dataset.i].name=tg.value;
   const h=document.querySelector(".edit .status");if(h){const [ht,w]=hintText();h.textContent=ht;h.classList.toggle("warn",w)}
