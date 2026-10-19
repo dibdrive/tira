@@ -341,7 +341,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
  gk:"שוער",apps:n=>`המספר בצד = במכמה משחקים השחקן היה בסגל, מתוך ${n} משחקים שבהם נרשם סגל`,tapPlayer:"לחצו על שחקן כדי לראות את הנתונים שלו",
  liveOn:"● משחק חי",ft:"סיום",h1:"מחצית ראשונה",h2:"מחצית שנייה",added:" · תוספת זמן",brk:"הפסקה · עד המחצית השנייה",brkOver:"הפסקה הסתיימה",ended:"המשחק הסתיים",
  unknownScorer:"מבקיע לא ידוע",goalFor:o=>`גול ל${o}`,noGoals:"עוד אין שערים במשחק.",
- share:"📤 שתף תוצאה",sharing:"מכין תמונה…",
+ share:"📤 שתף תוצאה",shareNext:"📤 שתף משחק",cheer:"כולם מוזמנים לעודד! 💙",sharing:"מכין תמונה…",
  waze:"ניווט בוויז",wazeTown:tw=>`ניווט ל${tw}`,venue:"מגרש",
  login:"כניסת מנהל",logout:"יציאה",editMode:"מצב עריכה ✓",notAllowed:"החשבון הזה לא מורשה לערוך",loading:"טוען…",offline:"אין חיבור לשרת. מציג נתונים שמורים",
  pGames:"משחקים בסגל",pGoals:"שערים",pCapt:"קפטן",pList:"המשחקים שלו",pNone:"עוד לא נרשמו משחקים לשחקן הזה.",close:"סגור",
@@ -361,7 +361,7 @@ ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشا�
  gk:"حارس",apps:n=>`الرقم بجانب اللاعب = عدد المباريات التي كان فيها بالتشكيلة، من أصل ${n}`,tapPlayer:"اضغطوا على لاعب لرؤية معلوماته",
  liveOn:"● بث مباشر",ft:"انتهت",h1:"الشوط الأول",h2:"الشوط الثاني",added:" · وقت بدل ضائع",brk:"استراحة · حتى الشوط الثاني",brkOver:"انتهت الاستراحة",ended:"انتهت المباراة",
  unknownScorer:"هدّاف غير معروف",goalFor:o=>`هدف لـ${o}`,noGoals:"لا أهداف بعد.",
- share:"📤 مشاركة النتيجة",sharing:"جاري تحضير الصورة…",
+ share:"📤 مشاركة النتيجة",shareNext:"📤 مشاركة المباراة",cheer:"الجميع مدعوون للتشجيع! 💙",sharing:"جاري تحضير الصورة…",
  waze:"اتجاهات Waze",wazeTown:tw=>`اتجاهات إلى ${tw}`,venue:"الملعب",
  login:"دخول المسؤول",logout:"خروج",editMode:"وضع التعديل ✓",notAllowed:"هذا الحساب غير مخوّل بالتعديل",loading:"جاري التحميل…",offline:"لا اتصال بالخادم. تظهر بيانات محفوظة",
  pGames:"مباريات بالتشكيلة",pGoals:"أهداف",pCapt:"كابتن",pList:"مبارياته",pNone:"لم تُسجّل مباريات لهذا اللاعب بعد.",close:"إغلاق",
@@ -695,6 +695,46 @@ async function shareResult(k,btn){
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
 
+async function shareNext(k,btn){
+  const g=gameByKey(k);if(!g)return;const x=results[k]||{};
+  const old=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent=t("sharing")}
+  try{
+    try{await document.fonts.ready}catch(e){}
+    const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const ctx=c.getContext("2d");
+    const disp=LANG==="ar"?'"Reem Kufi","Cairo",sans-serif':'"Secular One","Assistant",sans-serif',body=LANG==="ar"?'"Cairo",sans-serif':'"Assistant",sans-serif';
+    const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#1c3f9e");gr.addColorStop(1,"#0f2566");ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,330,170,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(0,330);ctx.lineTo(W,330);ctx.stroke();
+    ctx.direction="rtl";ctx.textAlign="center";ctx.fillStyle="#fff";
+    ctx.font=`600 38px ${body}`;ctx.globalAlpha=.85;ctx.fillText(`${compLabel(g).replace(/&[^;]+;/g,"")} · ${g.home?t("home"):t("away")}`,W/2,90);ctx.globalAlpha=1;
+    ctx.font=`72px ${disp}`;ctx.fillText(t("next"),W/2,180);
+    const crest=await loadImg((document.querySelector(".crest")||{}).src);
+    const usX=g.home?W*0.78:W*0.22,opX=g.home?W*0.22:W*0.78;
+    const circle=(cx,cy,r)=>{ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill()};
+    circle(usX,330,95);if(crest){ctx.save();ctx.beginPath();ctx.arc(usX,330,88,0,Math.PI*2);ctx.clip();ctx.drawImage(crest,usX-80,330-80,160,160);ctx.restore()}
+    circle(opX,330,95);ctx.fillStyle="#1c3f9e";ctx.font=`90px ${disp}`;ctx.textBaseline="middle";ctx.fillText("⚽",opX,336);
+    ctx.fillStyle="#fff";ctx.font=`80px ${disp}`;ctx.fillText("VS",W/2,336);ctx.textBaseline="alphabetic";
+    const wrap=(txt,cx,y,maxW,size)=>{ctx.font=`700 ${size}px ${body}`;const words=txt.split(" ");let line="",ly=y;for(const w of words){const tst=line?line+" "+w:w;if(ctx.measureText(tst).width>maxW&&line){ctx.fillText(line,cx,ly);line=w;ly+=size*1.15}else line=tst}ctx.fillText(line,cx,ly)};
+    wrap(t("team"),usX,480,380,44);wrap(oName(g.o),opX,480,380,40);
+    ctx.fillStyle="rgba(255,255,255,.1)";ctx.beginPath();ctx.roundRect(110,580,W-220,g.time?330:200,36);ctx.fill();ctx.fillStyle="#fff";
+    ctx.font=`600 56px ${body}`;ctx.fillText(`${t("day",DAYS()[g.date.getDay()])} · ⁦${fmt(g.date)}⁩`,W/2,670);
+    if(g.time){ctx.font=`170px ${disp}`;ctx.direction="ltr";ctx.fillText(g.time,W/2,850);ctx.direction="rtl"}
+    const v=results[k]&&results[k].venue?results[k].venue:g.home?(LANG==="ar"?"ملعب الطيرة":HOME_VENUE):(TOWN[g.o]?(LANG==="ar"?TOWN[g.o][1]:TOWN[g.o][0]):"");
+    let y=g.time?990:870;
+    if(v){ctx.font=`700 44px ${body}`;ctx.fillText(`📍 ${v}`,W/2,y);y+=70}
+    ctx.font=`600 40px ${body}`;ctx.globalAlpha=.9;ctx.fillText(t("cheer"),W/2,y);ctx.globalAlpha=1;
+    const sp=await loadImg((document.querySelector(".sponsor img")||{}).src);
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.roundRect(W/2-260,H-230,520,200,28);ctx.fill();
+    ctx.fillStyle="#5f6a85";ctx.font=`700 26px ${body}`;ctx.fillText(t("sponsor"),W/2,H-196);
+    if(sp){const sw=300,sh=sw*sp.height/sp.width;ctx.drawImage(sp,W/2-sw/2,H-185,sw,Math.min(sh,150))}
+    ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("dibdrive.com/tira",W/2,H-245);
+    const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+    const file=new File([blob],`tira-next-${iso(g.date)}.png`,{type:"image/png"});
+    const txt=`${t("next")}: ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""} · dibdrive.com/tira`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+  }finally{if(btn){btn.disabled=false;btn.textContent=old}}
+}
+
 // ===== Live match =====
 const HALF=40, BREAK=10;
 const isLive=x=>!!(x&&x.live&&["pre","1H","HT","2H"].includes(x.live.st));
@@ -771,7 +811,7 @@ function renderLive(){
   const tl=timeline(x,g,canEdit);
   const lc=lineupChips(x);
   const lineup=lc.sq.length?`<div class="slabel">${t("lineupN",lc.sq.length)}</div>${lc.html}`:`<p class="empty">${t("noLineup")}</p>`;
-  const extra=`<div class="lextra">${venueLink(g)}${st==="FT"&&outcome(x)?`<button class="btn sm" data-share="${g.key}">${t("share")}</button>`:""}</div>`;
+  const extra=`<div class="lextra">${venueLink(g)}${st==="FT"&&outcome(x)?`<button class="btn sm" data-share="${g.key}">${t("share")}</button>`:""}${(!st||st==="pre")&&!outcome(x)?`<button class="btn sm" data-sharenext="${g.key}">${t("shareNext")}</button>`:""}</div>`;
   let ctrl="";
   if(canEdit){
     const B=(id,txt,cls="")=>`<button class="btn ${cls}" data-lv="${id}">${txt}</button>`;
@@ -791,6 +831,7 @@ function renderLive(){
   sec.innerHTML=`<div class="lhead">${badge}<span class="lmeta">${meta}</span></div>${board}${extra}${ctrl}${tl||(playing?`<p class="empty">${t("noGoals")}</p>`:"")}${lineup}`;
 }
 document.getElementById("live").addEventListener("click",async e=>{
+  const sn=e.target.closest("[data-sharenext]");if(sn){shareNext(sn.dataset.sharenext,sn);return}
   const sh=e.target.closest("[data-share]");if(sh){shareResult(sh.dataset.share,sh);return}
   const pk=e.target.closest("[data-pk]");
   if(pk&&livePick){livePick.no=+pk.dataset.pk;document.querySelectorAll("#live [data-pk]").forEach(c=>c.setAttribute("aria-pressed",String(c===pk)));return}
