@@ -1,0 +1,17 @@
+{
+  "name": "מ.כ. צעירי טירה 2026/27",
+  "short_name": "צעירי טירה",
+  "description": "תוצאות, מבקיעים וסגל – ליגת ילדים ב׳ שרון 2 וגביע ילדים ב׳",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f2566",
+  "theme_color": "#1c3f9e",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
