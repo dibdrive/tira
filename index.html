@@ -337,7 +337,7 @@ const S={
 he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27",
  wins:"ניצחונות",draws:"תיקו",losses:"הפסדים",gf:"שערי זכות",ga:"שערי חובה",pts:"נקודות",
  statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך 30`,
- sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
+ sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
  leagueSum:p=>`${p} מתוך 30 שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
  days:["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"],day:d=>`יום ${d}`,
  months:["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
@@ -357,7 +357,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
 ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشارون 2 · كأس الأولاد ب׳ · موسم 2026/27",
  wins:"فوز",draws:"تعادل",losses:"خسارة",gf:"أهداف لنا",ga:"أهداف علينا",pts:"نقاط",
  statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من 30`,
- sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
+ sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
  leagueSum:p=>`لُعبت ${p} من 30`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
  days:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],day:d=>d,
  months:["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"],
@@ -685,6 +685,7 @@ pdlg.addEventListener("click",e=>{if(e.target===pdlg||e.target.closest("#pclose"
 
 // ===== Share card =====
 function loadImg(src){return new Promise(r=>{if(!src)return r(null);const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
+const cardComp=g=>g.comp==="cup"?`${t("cupFull")} · ${g.stageTxt||t("cupRound")+" "+g.cr}`:`${t("leagueFull")} · ${t("round")} ${g.r}`;
 async function shareResult(k,btn){
   const g=gameByKey(k),x=results[k];if(!g||!x||!outcome(x))return;
   const old=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent=t("sharing")}
@@ -695,7 +696,7 @@ async function shareResult(k,btn){
     const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#1c3f9e");gr.addColorStop(1,"#0f2566");ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
     ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,520,250,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(0,520);ctx.lineTo(W,520);ctx.stroke();
     ctx.direction="rtl";ctx.textAlign="center";ctx.fillStyle="#fff";
-    ctx.font=`600 38px ${body}`;ctx.globalAlpha=.85;ctx.fillText(`${compLabel(g).replace(/&[^;]+;/g,"")} · ${fmt(g.date)}`,W/2,90);ctx.globalAlpha=1;
+    ctx.font=`600 38px ${body}`;ctx.globalAlpha=.85;ctx.fillText(`${cardComp(g)} · ${fmt(g.date)}`,W/2,90);ctx.globalAlpha=1;
     ctx.font=`72px ${disp}`;ctx.fillText(t("cardFT"),W/2,180);
     const crest=await loadImg((document.querySelector(".crest")||{}).src);
     const usX=g.home?W*0.78:W*0.22,opX=g.home?W*0.22:W*0.78;
@@ -717,7 +718,7 @@ async function shareResult(k,btn){
     ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("dibdrive.com/tira",W/2,H-245);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-${iso(g.date)}.png`,{type:"image/png"});
-    const txt=`${t("team")} ${x.us} : ${x.them} ${oName(g.o)} · dibdrive.com/tira`;
+    const txt=`${cardComp(g)} | ${t("team")} ${x.us} : ${x.them} ${oName(g.o)} · dibdrive.com/tira`;
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
     else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
@@ -733,7 +734,7 @@ async function shareNext(k,btn){
     const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#1c3f9e");gr.addColorStop(1,"#0f2566");ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
     ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,330,170,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(0,330);ctx.lineTo(W,330);ctx.stroke();
     ctx.direction="rtl";ctx.textAlign="center";ctx.fillStyle="#fff";
-    ctx.font=`600 38px ${body}`;ctx.globalAlpha=.85;ctx.fillText(`${compLabel(g).replace(/&[^;]+;/g,"")} · ${g.home?t("home"):t("away")}`,W/2,90);ctx.globalAlpha=1;
+    ctx.font=`600 38px ${body}`;ctx.globalAlpha=.85;ctx.fillText(`${cardComp(g)} · ${g.home?t("home"):t("away")}`,W/2,90);ctx.globalAlpha=1;
     ctx.font=`72px ${disp}`;ctx.fillText(t("next"),W/2,180);
     const crest=await loadImg((document.querySelector(".crest")||{}).src);
     const usX=g.home?W*0.78:W*0.22,opX=g.home?W*0.22:W*0.78;
@@ -757,7 +758,7 @@ async function shareNext(k,btn){
     ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("dibdrive.com/tira",W/2,H-245);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-next-${iso(g.date)}.png`,{type:"image/png"});
-    const txt=`${t("next")}: ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""} · dibdrive.com/tira`;
+    const txt=`${t("next")} (${cardComp(g)}): ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""} · dibdrive.com/tira`;
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
     else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
