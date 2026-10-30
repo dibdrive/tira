@@ -249,6 +249,27 @@ dialog#gdlg::backdrop{background:rgba(0,0,0,.88)}
 .gbox{display:flex;flex-direction:column;align-items:center;gap:12px}
 .gbox img{max-width:96vw;max-height:80vh;border-radius:8px;display:block;background:#000}
 .gnav{display:flex;gap:10px;align-items:center;color:#fff;font-weight:700}
+html.native #installBar,html.native #auth,html.native #icsAll{display:none!important}
+.annl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ann{background:var(--chalk);border-radius:12px;padding:10px 14px;border-inline-start:4px solid var(--pitch)}
+.annt{font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.annd{font-size:12px;color:var(--muted);margin-top:4px}
+.annl.old .ann{border-inline-start-color:var(--line);opacity:.85}
+.annmore{margin-top:8px;font-size:13px}
+.anned{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.anned textarea{height:auto;padding:8px 10px;resize:vertical}
+.anned .actions{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.trweek{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.trl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.trl li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--line);border-radius:12px}
+.trl li>span:first-child{flex:1;min-width:0}
+.trl li.nx{border-color:var(--pitch);border-width:2px}
+.trl li.cx>span:first-child{text-decoration:line-through;color:var(--muted)}
+.tradd{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tradd .txt{flex:1 1 120px}
+.prefs{display:flex;flex-wrap:wrap;gap:6px}
+.netbar{position:sticky;top:0;z-index:5;background:#b23a32;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px 10px}
+.netbar[hidden]{display:none}
 .prole{font-size:12px;font-weight:700;color:var(--pitch);border:1px solid var(--pitch);border-radius:99px;padding:0 8px}
 .pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pstats div{background:var(--chalk);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
@@ -279,6 +300,7 @@ header.hero::before,header.hero::after{pointer-events:none}
 .auth span{opacity:.9}
 .stats-note{position:relative;font-size:12px;opacity:.8;margin-top:6px}
 </style>
+<div class="netbar" id="netBar" hidden></div>
 <div class="wrap">
   <header class="hero">
     <button class="langbtn" id="langBtn" type="button">عربي</button>
@@ -290,6 +312,8 @@ header.hero::before,header.hero::after{pointer-events:none}
     <div class="auth" id="auth"></div>
   </header>
 
+  <section class="annsec" id="annSec" hidden></section>
+
   <section class="live" id="live" hidden aria-live="polite"></section>
 
   <a class="sponsor" href="https://dibdrive.com" target="_blank" rel="noopener" aria-label="חסות: דיב מנסור, בית ספר לנהיגה">
@@ -298,6 +322,9 @@ header.hero::before,header.hero::after{pointer-events:none}
   </a>
 
   <div class="installbar" id="installBar" hidden><button class="btn" id="installBtn" type="button" data-t="installBtn">📲 הוסיפו את האתר למסך הבית</button><button class="x" id="installX" type="button" aria-label="סגור">×</button><p class="hint" id="installHow" hidden></p></div>
+
+  <section id="trainSec" hidden></section>
+  <section id="prefSec" hidden></section>
 
   <section>
     <h2 data-t="scorersH">מלך השערים</h2>
@@ -371,7 +398,7 @@ const S={
 he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27",
  wins:"ניצחונות",draws:"תיקו",losses:"הפסדים",gf:"שערי זכות",ga:"שערי חובה",pts:"נקודות",
  statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך 30`,
- sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",h2h:"מפגשים קודמים",tableBtn:"📊 טבלת הליגה",addCal:"📅 הוסף ליומן",icsAll:"📅 כל משחקי העונה ליומן",photos:"תמונות מהמשחק",photo:"תמונה",galErr:"לא ניתן לטעון תמונות",installBtn:"📲 הוסיפו את האתר למסך הבית",instIOS:"בספארי: לחצו על כפתור השיתוף ⬆️ ואז על „הוספה למסך הבית”",instSam:"בדפדפן סמסונג: לחצו על התפריט ☰ בתחתית המסך ← „הוסף דף אל” ← „מסך הבית”",instAnd:"בכרום: לחצו על התפריט ⋮ ואז על „הוספה למסך הבית” או „התקנת אפליקציה”",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
+ sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",annH:"📢 הודעות מהקבוצה",annOld:n=>`הודעות קודמות (${n})`,annPushT:"📢 הודעה מצעירי טירה",trainH:"🗓️ אימונים",trainNext:"האימון הבא",trainNone:"עוד לא נקבעו אימונים קבועים",cancelled:"בוטל",trOffT:"❌ האימון בוטל",trOnT:"✅ האימון מתקיים כרגיל",prefsH:"🔔 אילו התראות לקבל?",p_all:"הכול (כולל כל גול)",p_res:"תוצאות, תזכורות והודעות",p_ann:"רק הודעות מהקבוצה",p_off:"בלי התראות",netOff:"📶 אין חיבור – מוצגים הנתונים האחרונים",h2h:"מפגשים קודמים",tableBtn:"📊 טבלת הליגה",addCal:"📅 הוסף ליומן",icsAll:"📅 כל משחקי העונה ליומן",photos:"תמונות מהמשחק",photo:"תמונה",galErr:"לא ניתן לטעון תמונות",installBtn:"📲 הוסיפו את האתר למסך הבית",instIOS:"בספארי: לחצו על כפתור השיתוף ⬆️ ואז על „הוספה למסך הבית”",instSam:"בדפדפן סמסונג: לחצו על התפריט ☰ בתחתית המסך ← „הוסף דף אל” ← „מסך הבית”",instAnd:"בכרום: לחצו על התפריט ⋮ ואז על „הוספה למסך הבית” או „התקנת אפליקציה”",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
  leagueSum:p=>`${p} מתוך 30 שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
  days:["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"],day:d=>`יום ${d}`,
  months:["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
@@ -391,7 +418,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
 ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشارون 2 · كأس الأولاد ب׳ · موسم 2026/27",
  wins:"فوز",draws:"تعادل",losses:"خسارة",gf:"أهداف لنا",ga:"أهداف علينا",pts:"نقاط",
  statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من 30`,
- sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",h2h:"مواجهات سابقة",tableBtn:"📊 جدول الدوري",addCal:"📅 أضف إلى التقويم",icsAll:"📅 كل مباريات الموسم إلى التقويم",photos:"صور من المباراة",photo:"صورة",galErr:"تعذّر تحميل الصور",installBtn:"📲 أضيفوا الموقع إلى الشاشة الرئيسية",instIOS:"في سفاري: اضغطوا زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»",instSam:"في متصفح سامسونج: اضغطوا القائمة ☰ في أسفل الشاشة ← «إضافة صفحة إلى» ← «الشاشة الرئيسية»",instAnd:"في كروم: اضغطوا القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
+ sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",annH:"📢 رسائل من الفريق",annOld:n=>`رسائل سابقة (${n})`,annPushT:"📢 رسالة من شباب الطيرة",trainH:"🗓️ التدريبات",trainNext:"التدريب القادم",trainNone:"لم تُحدَّد مواعيد التدريب بعد",cancelled:"أُلغي",trOffT:"❌ أُلغي التدريب",trOnT:"✅ التدريب في موعده",prefsH:"🔔 أي إشعارات تريد؟",p_all:"الكل (مع كل هدف)",p_res:"النتائج والتذكيرات والرسائل",p_ann:"رسائل الفريق فقط",p_off:"بدون إشعارات",netOff:"📶 لا يوجد اتصال – تُعرض آخر البيانات",h2h:"مواجهات سابقة",tableBtn:"📊 جدول الدوري",addCal:"📅 أضف إلى التقويم",icsAll:"📅 كل مباريات الموسم إلى التقويم",photos:"صور من المباراة",photo:"صورة",galErr:"تعذّر تحميل الصور",installBtn:"📲 أضيفوا الموقع إلى الشاشة الرئيسية",instIOS:"في سفاري: اضغطوا زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»",instSam:"في متصفح سامسونج: اضغطوا القائمة ☰ في أسفل الشاشة ← «إضافة صفحة إلى» ← «الشاشة الرئيسية»",instAnd:"في كروم: اضغطوا القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
  leagueSum:p=>`لُعبت ${p} من 30`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
  days:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],day:d=>d,
  months:["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"],
@@ -613,7 +640,7 @@ function editor(g){
 function renderAll(){
   if(!canEdit){draft=null;form.hidden=true;livePick=null}
   addBtn.hidden=!canEdit||!form.hidden;
-  renderStatic();renderAuth();renderRoster();renderStats();renderScorers();renderGames();renderLive();
+  renderStatic();renderAuth();renderRoster();renderStats();renderScorers();renderGames();renderLive();if(typeof renderExtras==="function")renderExtras();
 }
 
 function gameByKey(k){return allGames().find(g=>g.key===k)}
@@ -758,8 +785,7 @@ async function shareResult(k,btn){
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-${iso(g.date)}.png`,{type:"image/png"});
     const txt=`${cardComp(g)} | ${t("team")} ${x.us} : ${x.them} ${oName(g.o)} · dibdrive.com/tira`;
-    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
-    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+    await shareFile(blob,file,txt);
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
 
@@ -798,8 +824,7 @@ async function shareNext(k,btn){
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-next-${iso(g.date)}.png`,{type:"image/png"});
     const txt=`${t("next")} (${cardComp(g)}): ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""} · dibdrive.com/tira`;
-    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
-    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+    await shareFile(blob,file,txt);
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
 
@@ -914,11 +939,11 @@ document.getElementById("live").addEventListener("click",async e=>{
   const b=e.target.closest("[data-lv]");if(!b)return;
   const a=b.dataset.lv;
   if(a==="edit"){openGame(k);return}
-  if(a==="kick"){await patchGame(k,{live:{st:"1H",t1:now},events:x.events||[]});return}
+  if(a==="kick"){await patchGame(k,{live:{st:"1H",t1:now},events:x.events||[]});liveNotify("kick",k);return}
   if(a==="unlive"){await patchGame(k,{live:null});return}
-  if(a==="ht"){await patchGame(k,{live:{...L,st:"HT",e1:now}});return}
+  if(a==="ht"){await patchGame(k,{live:{...L,st:"HT",e1:now}});liveNotify("ht",k);return}
   if(a==="k2"){await patchGame(k,{live:{...L,st:"2H",t2:now}});return}
-  if(a==="ft"){if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ללחוץ שוב לסיום";return}await patchGame(k,{live:{...L,st:"FT",e2:now}});return}
+  if(a==="ft"){if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ללחוץ שוב לסיום";return}await patchGame(k,{live:{...L,st:"FT",e2:now}});liveNotify("ft",k);return}
   if(a==="undo"){
     const back={"1H":"pre","HT":"1H","2H":"HT","FT":"2H"}[L.st];if(!back)return;
     const nl={...L,st:back};if(back==="pre"){delete nl.t1}if(back==="1H")delete nl.e1;if(back==="HT")delete nl.t2;if(back==="2H")delete nl.e2;
@@ -933,7 +958,7 @@ document.getElementById("live").addEventListener("click",async e=>{
     const p=livePick.no!=null?ROSTER.find(r=>r[0]===livePick.no):null;
     const h=L.st==="2H"||L.st==="FT"?2:1;
     const ev={id:now.toString(36)+Math.random().toString(36).slice(2,5),side:livePick.side,no:p?p[0]:null,name:p?`${p[1]} (${p[0]})`:"",min,h,ts:now};
-    livePick=null;await patchGame(k,{events:[...(x.events||[]),ev]});return}
+    livePick=null;await patchGame(k,{events:[...(x.events||[]),ev]});liveNotify("goal",k,ev);return}
 });
 setInterval(()=>{
   const el=document.getElementById("liveClock");if(!el)return;
@@ -942,6 +967,145 @@ setInterval(()=>{
 },1000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")renderLive()});
 document.getElementById("live").addEventListener("input",e=>{if(e.target.id==="lmin"&&livePick)livePick.min=e.target.value});
+
+// ===== Native app (Capacitor) + push notifications =====
+const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const CP=NATIVE?(window.Capacitor.Plugins||{}):{};
+if(NATIVE)document.documentElement.classList.add("native");
+async function pushSubscribe(){
+  const FM=CP.FirebaseMessaging;if(!FM)return;
+  try{
+    let p=await FM.checkPermissions();if(p.receive!=="granted")p=await FM.requestPermissions();if(p.receive!=="granted")return;
+    if(window.Capacitor.getPlatform()==="android"){try{await FM.createChannel({id:"tira",name:"משחקים ותוצאות",description:"גולים, תוצאות ותזכורות",importance:4,visibility:1,vibration:true})}catch(e){}}
+    const want=new Set((PREF_CATS[pushMode()]||PREF_CATS.all).map(c=>c+"_"+LANG));
+    for(const c of ["live","result","remind","ann"])for(const l of ["he","ar"]){const tp=c+"_"+l;try{if(want.has(tp))await FM.subscribeToTopic({topic:tp});else await FM.unsubscribeFromTopic({topic:tp})}catch(e){}}
+  }catch(e){console.warn("push",e)}
+}
+if(NATIVE){pushSubscribe();document.getElementById("langBtn").addEventListener("click",()=>setTimeout(pushSubscribe,0))}
+async function shareFile(blob,file,txt){
+  if(NATIVE&&CP.Filesystem&&CP.Share){
+    const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(",")[1]);fr.readAsDataURL(blob)});
+    const w=await CP.Filesystem.writeFile({path:file.name,data:b64,directory:"CACHE"});
+    try{await CP.Share.share({text:txt,files:[w.uri]})}catch(e){}
+    return;
+  }
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:txt})}catch(e){}}
+  else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+}
+// --- sending (admin only): GitHub repository_dispatch -> Action -> Firebase Cloud Messaging ---
+const GH_KEY="tira-gh-token";
+const ghToken=()=>{try{return localStorage.getItem(GH_KEY)||""}catch(e){return ""}};
+function inLang(l,fn){const o=LANG;LANG=l;try{return fn()}finally{LANG=o}}
+async function pushSend(build,cat){
+  const tok=ghToken();if(!tok||!canEdit)return false;
+  const payload={cat:cat||"live",he:inLang("he",build),ar:inLang("ar",build)};
+  try{const r=await fetch("https://api.github.com/repos/dibdrive/tira/actions/workflows/notify.yml/dispatches",{method:"POST",headers:{Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"},body:JSON.stringify({ref:"main",inputs:{payload:JSON.stringify(payload)}})});
+    if(!r.ok){document.getElementById("sync").textContent="ההתראה לא נשלחה ("+r.status+")";return false}return true}
+  catch(e){document.getElementById("sync").textContent="ההתראה לא נשלחה";return false}
+}
+function liveNotify(kind,k,ev){
+  const g=gameByKey(k);if(!g)return;
+  const cat=kind==="ft"?"result":kind==="test"?"ann":"live";
+  pushSend(()=>{
+    const x=results[k]||{},sc=`${x.us??0}:${x.them??0}`,team=t("team"),opp=oName(g.o),ar=LANG==="ar";
+    if(kind==="kick")return {title:ar?"🟢 بدأت المباراة!":"🟢 המשחק התחיל!",body:`${team} – ${opp} · ${cardComp(g)}`};
+    if(kind==="goal"&&ev&&ev.side==="us")return {title:`${ar?"⚽ هدف!":"⚽ גול!"} ${team} ${sc}`,body:`${ev.no!=null?pName(ev.no)+" ":""}${ev.min}' · ${ar?"ضد":"מול"} ${opp}`};
+    if(kind==="goal")return {title:`${ar?"هدف لـ":"גול ל"}${opp}`,body:`${team} ${sc} · ${ev?ev.min+"'":""}`};
+    if(kind==="ht")return {title:`${ar?"⏸ استراحة":"⏸ מחצית"}: ${team} ${sc} ${opp}`,body:cardComp(g)};
+    if(kind==="ft"){const o=outcome(x);return {title:`${ar?"🏁 النهاية":"🏁 סיום"}: ${team} ${sc} ${opp}`,body:`${o?t(o)+(o==="W"?"! 💙":""):""} · ${cardComp(g)}`}}
+    if(kind==="test")return {title:ar?"🔔 تجربة إشعارات":"🔔 בדיקת התראות",body:ar?"الإشعارات تعمل ✓":"ההתראות עובדות ✓"};
+  },cat);
+}
+document.getElementById("auth").addEventListener("click",e=>{
+  if(!e.target.closest("#pushCfg"))return;
+  const cur=ghToken();
+  const v=prompt(cur?"התראות מוגדרות ✓\nאפשר להדביק טוקן חדש, או להשאיר ריק כדי לשלוח בדיקה:":"הדבק את טוקן ה-GitHub (מתחיל ב-github_pat_):","");
+  if(v===null)return;
+  if(v.trim()){try{localStorage.setItem(GH_KEY,v.trim())}catch(_){}renderAuth()}
+  if(ghToken()&&confirm("לשלוח התראת בדיקה לכל מי שהתקין את האפליקציה?"))liveNotify("test",(featuredGame()||allGames()[0]).key);
+});
+
+// ===== Announcements, trainings, notification preferences, offline =====
+const ANN_K="_ann",TR_K="_train";
+const annItems=()=>((results[ANN_K]||{}).items||[]).slice().sort((a,b)=>b.ts-a.ts);
+let annOpen=false;
+function renderAnn(){
+  const sec=document.getElementById("annSec");if(!sec)return;
+  const items=annItems(),fresh=items.filter(a=>Date.now()-a.ts<14*864e5);
+  const row=(a,admin)=>`<li class="ann"><div class="annt">${esc(a.text).replace(/\n/g,"<br>")}</div><div class="annd">${fmt(new Date(a.ts))} · ${String(new Date(a.ts).getHours()).padStart(2,"0")}:${String(new Date(a.ts).getMinutes()).padStart(2,"0")}${admin?` <button class="lnk annx" data-anndel="${a.id}" type="button">מחק</button>`:""}</div></li>`;
+  let h="";
+  if(fresh.length)h+=`<ul class="annl">${row(fresh[0],canEdit)}</ul>`;
+  const rest=items.slice(fresh.length?1:0,6);
+  if(rest.length)h+=`<button class="lnk annmore" id="annMore" type="button">${t("annOld",rest.length)}</button>${annOpen?`<ul class="annl old">${rest.map(a=>row(a,canEdit)).join("")}</ul>`:""}`;
+  if(canEdit)h+=`<div class="anned"><textarea class="txt" id="annTxt" rows="3" placeholder="הודעה להורים, למשל: האימון מחר בוטל"></textarea><div class="actions"><label class="slabel"><input type="checkbox" id="annPush" checked> שלח התראה</label><button class="btn primary" id="annSend" type="button">📢 פרסם</button></div></div>`;
+  sec.hidden=!h;sec.innerHTML=h?`<h2>${t("annH")}</h2>${h}`:"";
+}
+document.getElementById("annSec").addEventListener("click",async e=>{
+  if(e.target.closest("#annMore")){annOpen=!annOpen;renderAnn();return}
+  const d=e.target.closest("[data-anndel]");
+  if(d&&canEdit){if(d.dataset.armed!=="1"){d.dataset.armed="1";d.textContent="למחוק?";return}
+    await writeDoc(ANN_K,{items:annItems().filter(a=>a.id!==d.dataset.anndel)});renderAnn();return}
+  if(e.target.closest("#annSend")&&canEdit){
+    const ta=document.getElementById("annTxt"),text=(ta.value||"").trim();if(!text)return;
+    const b=e.target.closest("#annSend");b.disabled=true;b.textContent="שולח…";
+    const item={id:Date.now().toString(36),text,ts:Date.now()};
+    await writeDoc(ANN_K,{items:[item,...annItems()].slice(0,20)});
+    if(document.getElementById("annPush").checked)pushSend(()=>({title:t("annPushT"),body:text}),"ann");
+    renderAnn();
+  }
+});
+// --- trainings ---
+const trDoc=()=>results[TR_K]||{slots:[],cancel:{}};
+function upcomingTrainings(n){
+  const tr=trDoc(),out=[],t0=today();if(!(tr.slots||[]).length)return out;
+  for(let i=0;i<21&&out.length<n;i++){const d=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i);
+    for(const s of (tr.slots||[]).filter(s=>+s.d===d.getDay()).sort((a,b)=>(a.time||"").localeCompare(b.time||""))){
+      if(i===0&&s.time){const [hh,mm]=s.time.split(":").map(Number);if(new Date().getHours()*60+new Date().getMinutes()>hh*60+mm+90)continue}
+      out.push({date:d,iso:iso(d),...s,key:iso(d)+"_"+(s.time||""),cancelled:!!(tr.cancel||{})[iso(d)+"_"+(s.time||"")]})}}
+  return out.slice(0,n);
+}
+const trLabel=x=>`${t("day",DAYS()[x.date.getDay()])} ${fmt(x.date)}${x.time?` · ${x.time}`:""}${x.place?` · ${esc(x.place)}`:""}`;
+function renderTrain(){
+  const sec=document.getElementById("trainSec");if(!sec)return;
+  const tr=trDoc(),up=upcomingTrainings(canEdit?6:3);
+  let h=`<h2>${t("trainH")}</h2>`;
+  if(!(tr.slots||[]).length&&!canEdit){sec.hidden=true;sec.innerHTML="";return}
+  sec.hidden=false;
+  if(!(tr.slots||[]).length)h+=`<p class="empty">${t("trainNone")}</p>`;
+  else{
+    h+=`<div class="trweek">${(tr.slots||[]).slice().sort((a,b)=>a.d-b.d||(a.time||"").localeCompare(b.time||"")).map(s=>`<span class="h2i">${t("day",DAYS()[s.d])}${s.time?` · ${s.time}`:""}${s.place?` · ${esc(s.place)}`:""}${canEdit?` <button class="lnk" data-trdel="${s.d}|${s.time||""}" type="button" aria-label="הסר">×</button>`:""}</span>`).join("")}</div>`;
+    h+=`<ul class="trl">${up.map((x,i)=>`<li class="${x.cancelled?"cx":""}${i===0&&!canEdit?" nx":""}"><span>${i===0?`<b>${t("trainNext")}:</b> `:""}${trLabel(x)}</span>${x.cancelled?`<span class="chip L">${t("cancelled")}</span>`:""}${canEdit?`<button class="btn sm" data-trx="${x.key}" type="button">${x.cancelled?"↺ החזר":"❌ בטל"}</button>`:""}</li>`).join("")}</ul>`;
+  }
+  if(canEdit)h+=`<div class="tradd"><select class="txt" id="trDay">${DAYS().map((d,i)=>`<option value="${i}">${t("day",d)}</option>`).join("")}</select><input class="txt" type="time" id="trTime" value="17:00"><input class="txt" id="trPlace" placeholder="מגרש (לא חובה)"><button class="btn" id="trAdd" type="button">+ הוסף אימון קבוע</button></div>`;
+  sec.innerHTML=h;
+}
+document.getElementById("trainSec").addEventListener("click",async e=>{
+  if(!canEdit)return;const tr=trDoc();
+  if(e.target.closest("#trAdd")){const d=+document.getElementById("trDay").value,time=document.getElementById("trTime").value||"",place=document.getElementById("trPlace").value.trim();
+    await writeDoc(TR_K,{slots:[...(tr.slots||[]).filter(s=>!(+s.d===d&&s.time===time)),{d,time,place}],cancel:tr.cancel||{}});renderTrain();return}
+  const del=e.target.closest("[data-trdel]");if(del){const [d,time]=del.dataset.trdel.split("|");await writeDoc(TR_K,{slots:(tr.slots||[]).filter(s=>!(String(s.d)===d&&(s.time||"")===time)),cancel:tr.cancel||{}});renderTrain();return}
+  const x=e.target.closest("[data-trx]");if(x){const k=x.dataset.trx,c={...(tr.cancel||{})},was=!!c[k];if(was)delete c[k];else c[k]=true;
+    for(const ck of Object.keys(c))if(ck.slice(0,10)<iso(today()))delete c[ck];
+    await writeDoc(TR_K,{slots:tr.slots||[],cancel:c});renderTrain();
+    const it=upcomingTrainings(12).find(u=>u.key===k);
+    if(it&&confirm(was?"לשלוח התראה שהאימון מתקיים כרגיל?":"לשלוח התראה לכל ההורים על ביטול האימון?"))pushSend(()=>({title:was?t("trOnT"):t("trOffT"),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
+  }
+});
+// --- notification preferences (app only) ---
+const PREF_K="tira-push-mode",PREF_CATS={all:["live","result","remind","ann"],res:["result","remind","ann"],ann:["ann"],off:[]};
+const pushMode=()=>{try{return localStorage.getItem(PREF_K)||"all"}catch(e){return "all"}};
+function renderPrefs(){
+  const sec=document.getElementById("prefSec");if(!sec)return;
+  if(!NATIVE){sec.hidden=true;return}
+  sec.hidden=false;const m=pushMode();
+  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div>`;
+}
+document.getElementById("prefSec").addEventListener("click",e=>{const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
+// --- offline banner + caching ---
+function renderNet(){const b=document.getElementById("netBar");if(b)b.hidden=navigator.onLine!==false}
+window.addEventListener("online",renderNet);window.addEventListener("offline",renderNet);
+if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+function renderExtras(){renderAnn();renderTrain();renderPrefs();renderNet();const nb=document.getElementById("netBar");if(nb)nb.textContent=t("netOff")}
 
 // ===== History vs opponent =====
 const normO=s=>(s||"").replace(/[״"'׳\-–.]/g,"").replace(/\s+/g," ").trim();
@@ -983,7 +1147,7 @@ function gcalUrl(g){
   const dates=c.allDay?`${icsD(c.s)}/${icsD(c.e)}`:`${icsT(c.s)}/${icsT(c.e)}`;
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(calTitle(g))+"&dates="+dates+"&ctz=Asia/Jerusalem&details="+encodeURIComponent(calDesc(g))+(v?"&location="+encodeURIComponent(v):"");
 }
-function addToCal(k){const g=gameByKey(k);if(!g)return;if(/Android/i.test(navigator.userAgent))window.open(gcalUrl(g),"_blank","noopener");else downloadIcs([g],`tira-${iso(g.date)}.ics`)}
+function addToCal(k){const g=gameByKey(k);if(!g)return;if(NATIVE||/Android/i.test(navigator.userAgent))window.open(gcalUrl(g),"_blank","noopener");else downloadIcs([g],`tira-${iso(g.date)}.ics`)}
 document.addEventListener("click",e=>{
   const c=e.target.closest&&e.target.closest("[data-ics]");if(c){addToCal(c.dataset.ics);return}
   if(e.target.closest&&e.target.closest("#icsAll")){const tdy=today();const gs=allGames().filter(g=>g.date>=tdy&&!outcome(results[g.key]));downloadIcs(gs.length?gs:allGames(),"tira-season.ics")}
@@ -1064,7 +1228,7 @@ const firebaseConfig = { apiKey:"AIzaSyCdS8w1u59iP25i42sM7KB_MX48gF-3szw", authD
 let fbUser=null;
 function renderAuth(){
   const el=document.getElementById("auth");
-  if(fbUser){el.innerHTML=`<span>${esc(fbUser.email||"")}</span><button class="lnk" id="logout">${t("logout")}</button>`}
+  if(fbUser){el.innerHTML=`<span>${esc(fbUser.email||"")}</span><button class="lnk" id="logout">${t("logout")}</button>${canEdit?`<button class="lnk" id="pushCfg" type="button">🔔 התראות${ghToken()?" ✓":""}</button>`:""}`}
   else el.innerHTML=`<button class="lnk" id="login">${t("login")}</button>`;
 }
 document.getElementById("auth").addEventListener("click",async e=>{
@@ -1077,6 +1241,7 @@ results=lsLoad();renderAll();setSync("loading");
 try{
   firebase.initializeApp(firebaseConfig);
   db=firebase.firestore();
+  try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
   firebase.auth().onAuthStateChanged(u=>{
     fbUser=u;canEdit=!!(u&&u.email&&u.email.toLowerCase()===OWNER_EMAIL);
     setSync(canEdit?"editMode":u?"notAllowed":"");
@@ -1087,7 +1252,7 @@ try{
     snap.docs.forEach(d=>{const v=d.data();if(v)next[d.id]=v});
     booted=true;
     results=next;lsSave();
-    renderRoster();renderStats();renderScorers();if(openKey==null)renderGames();renderLive();
+    renderRoster();renderStats();renderScorers();if(openKey==null)renderGames();renderLive();if(!document.activeElement||!document.activeElement.closest("#annSec,#trainSec"))renderExtras();
     if(syncKey==="loading")setSync("");
   },()=>setSync("offline"));
 }catch(e){setSync("offline")}
