@@ -1,0 +1,34 @@
+name: push-notifications
+on:
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: 'JSON {"he":{"title","body"},"ar":{"title","body"}} — leave empty to run the "game today" reminder'
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 5 * * *"   # every morning ~07:00–08:00 Israel time: "game today" reminder
+permissions:
+  contents: read
+concurrency:
+  group: push
+  cancel-in-progress: false
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Send
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          PAYLOAD: ${{ github.event.inputs.payload }}
+        run: |
+          if [ -n "$PAYLOAD" ]; then
+            node .github/scripts/notify.mjs event
+          else
+            node .github/scripts/notify.mjs reminder
+          fi
