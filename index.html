@@ -1087,7 +1087,7 @@ function renderTrain(){
     h+=`<div class="trweek">${(tr.slots||[]).slice().sort((a,b)=>a.d-b.d||(a.time||"").localeCompare(b.time||"")).map(s=>`<span class="h2i">${t("day",DAYS()[s.d])}${s.time?` · ${s.time}`:""}${s.place?` · ${esc(s.place)}`:""}${canEdit?` <button class="lnk" data-trdel="${s.d}|${s.time||""}" type="button" aria-label="הסר">×</button>`:""}</span>`).join("")}</div>`;
     h+=`<ul class="trl">${up.map((x,i)=>`<li class="${x.cancelled?"cx":""}${i===0&&!canEdit?" nx":""}"><span>${i===0?`<b>${t("trainNext")}:</b> `:""}${trLabel(x)}</span>${x.cancelled?`<span class="chip L">${t("cancelled")}</span>`:""}${canEdit?`<button class="btn sm" data-trx="${x.key}" type="button">${x.cancelled?"↺ החזר":"❌ בטל"}</button>`:""}</li>`).join("")}</ul>`;
   }
-  if(canEdit)h+=`<div class="tradd"><select class="txt" id="trDay">${DAYS().map((d,i)=>`<option value="${i}">${t("day",d)}</option>`).join("")}</select><input class="txt" type="time" id="trTime" value="17:00"><input class="txt" id="trPlace" placeholder="מגרש (לא חובה)"><button class="btn" id="trAdd" type="button">+ הוסף אימון קבוע</button></div>`;
+  if(canEdit)h+=`<div class="tradd"><select class="txt" id="trDay">${DAYS().map((d,i)=>`<option value="${i}">${t("day",d)}</option>`).join("")}</select><input class="txt" type="time" id="trTime" value="17:00"><input class="txt" id="trPlace" placeholder="מגרש (לא חובה)"><button class="btn" id="trAdd" type="button">+ הוסף אימון קבוע</button></div><label class="slabel"><input type="checkbox" id="trPush" checked> שלח התראה להורים כשמבטלים או מחזירים אימון</label>`;
   sec.innerHTML=h;
 }
 document.getElementById("trainSec").addEventListener("click",async e=>{
@@ -1095,11 +1095,11 @@ document.getElementById("trainSec").addEventListener("click",async e=>{
   if(e.target.closest("#trAdd")){const d=+document.getElementById("trDay").value,time=document.getElementById("trTime").value||"",place=document.getElementById("trPlace").value.trim();
     await writeDoc(TR_K,{slots:[...(tr.slots||[]).filter(s=>!(+s.d===d&&s.time===time)),{d,time,place}],cancel:tr.cancel||{}});renderTrain();return}
   const del=e.target.closest("[data-trdel]");if(del){const [d,time]=del.dataset.trdel.split("|");await writeDoc(TR_K,{slots:(tr.slots||[]).filter(s=>!(String(s.d)===d&&(s.time||"")===time)),cancel:tr.cancel||{}});renderTrain();return}
-  const x=e.target.closest("[data-trx]");if(x){const k=x.dataset.trx,c={...(tr.cancel||{})},was=!!c[k];if(was)delete c[k];else c[k]=true;
+  const x=e.target.closest("[data-trx]");if(x){const k=x.dataset.trx,c={...(tr.cancel||{})},was=!!c[k],tp=document.getElementById("trPush"),wantPush=!tp||tp.checked;if(was)delete c[k];else c[k]=true;
     for(const ck of Object.keys(c))if(ck.slice(0,10)<iso(today()))delete c[ck];
     await writeDoc(TR_K,{slots:tr.slots||[],cancel:c});renderTrain();
     const it=upcomingTrainings(12).find(u=>u.key===k);
-    if(it&&confirm(was?"לשלוח התראה שהאימון מתקיים כרגיל?":"לשלוח התראה לכל ההורים על ביטול האימון?"))pushSend(()=>({title:was?t("trOnT"):t("trOffT"),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
+    if(it&&wantPush)pushSend(()=>({title:was?t("trOnT"):t("trOffT"),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
   }
 });
 // --- notification preferences (app only) ---
