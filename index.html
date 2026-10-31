@@ -977,6 +977,11 @@ document.getElementById("live").addEventListener("input",e=>{if(e.target.id==="l
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?(window.Capacitor.Plugins||{}):{};
 if(NATIVE)document.documentElement.classList.add("native");
+// In the app WebView, target=_blank and window.open do nothing and intent:// fails; a top-level navigation to an external
+// https link is handed by Capacitor to the OS, which opens Waze / Calendar / the browser.
+if(NATIVE){const ext=u=>{try{const x=new URL(u,location.href);return /^https?:$/.test(x.protocol)&&x.host!==location.host}catch(_){return false}};
+  document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!ext(a.href))return;e.preventDefault();e.stopImmediatePropagation();location.href=a.href},true);
+  const wo=window.open.bind(window);window.open=(u,...r)=>{if(u&&ext(u)){location.href=new URL(u,location.href).href;return null}return wo(u,...r)}}
 async function pushSubscribe(){
   const FM=CP.FirebaseMessaging;if(!FM)return;
   try{
