@@ -776,7 +776,12 @@ async function shareResult(k,btn){
     ctx.fillStyle=o==="W"?"#1f7a44":o==="D"?"#9a7a12":"#b23a32";ctx.beginPath();ctx.roundRect(W/2-lw/2,820,lw,74,37);ctx.fill();ctx.fillStyle="#fff";ctx.fillText(lbl,W/2,872);
     const ev=sortedEvents(x).filter(e=>e.side==="us");
     let lines=ev.length?ev.map(e=>`⚽ ${dispName(e.name)||t("unknownScorer")}  \u2066${minLabel(e.h,e.min)}\u2069`):(x.scorers||[]).filter(s=>s.name&&s.goals>0).map(s=>`⚽ ${dispName(s.name)}${s.goals>1?" ×"+s.goals:""}`);
-    if(lines.length>3){const pr=[];for(let i=0;i<lines.length;i+=2)pr.push(lines.slice(i,i+2).join("   "));lines=pr}lines=lines.slice(0,3);ctx.font=`600 ${lines.some(l=>l.length>40)?30:36}px ${body}`;let y=960;for(const l of lines){ctx.fillText(l,W/2,y);y+=48}
+    const toRows=(ls,per)=>{const r=[];for(let i=0;i<ls.length;i+=per)r.push(ls.slice(i,i+per).join("   "));return r};
+    let rows=toRows(lines,lines.length<=3?1:lines.length<=8?2:3);
+    if(rows.length>4&&ev.length){const by=new Map();for(const e of ev){const k=dispName(e.name)||t("unknownScorer");by.set(k,[...(by.get(k)||[]),minLabel(e.h,e.min)])}
+      lines=[...by].map(([n,ms])=>`⚽ ${n}${ms.length>1?" ×"+ms.length:""}  ⁦${ms.join(" ")}⁩`);rows=toRows(lines,lines.length<=3?1:lines.length<=8?2:3)}
+    let fs=rows.length>=4?29:36;ctx.font=`600 ${fs}px ${body}`;while(fs>20&&rows.some(l=>ctx.measureText(l).width>W-60)){fs-=2;ctx.font=`600 ${fs}px ${body}`}
+    const lh=Math.min(fs*1.35,120/Math.max(rows.length-1,1));let y=945+(rows.length<3?15:0);for(const l of rows){ctx.fillText(l,W/2,y);y+=lh}
     const sp=await loadImg((document.querySelector(".sponsor img")||{}).src);
     ctx.fillStyle="#fff";ctx.beginPath();ctx.roundRect(W/2-260,H-230,520,200,28);ctx.fill();
     ctx.fillStyle="#5f6a85";ctx.font=`700 26px ${body}`;ctx.fillText(t("sponsor"),W/2,H-196);
