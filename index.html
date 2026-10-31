@@ -1004,7 +1004,8 @@ async function shareFile(blob,file,txt){
 }
 // --- sending (admin only): GitHub repository_dispatch -> Action -> Firebase Cloud Messaging ---
 const GH_KEY="tira-gh-token";
-const ghToken=()=>{try{return localStorage.getItem(GH_KEY)||""}catch(e){return ""}};
+const cleanTok=v=>String(v||"").replace(/[^A-Za-z0-9_]/g,"");
+const ghToken=()=>{try{return cleanTok(localStorage.getItem(GH_KEY))}catch(e){return ""}};
 function inLang(l,fn){const o=LANG;LANG=l;try{return fn()}finally{LANG=o}}
 async function pushSend(build,cat){
   const tok=ghToken();if(!tok||!canEdit)return false;
@@ -1031,7 +1032,7 @@ document.getElementById("auth").addEventListener("click",e=>{
   const cur=ghToken();
   const v=prompt(cur?"התראות מוגדרות ✓\nאפשר להדביק טוקן חדש, או להשאיר ריק כדי לשלוח בדיקה:":"הדבק את טוקן ה-GitHub (מתחיל ב-github_pat_):","");
   if(v===null)return;
-  if(v.trim()){try{localStorage.setItem(GH_KEY,v.trim())}catch(_){}renderAuth()}
+  if(v.trim()){const c=cleanTok(v);if(!/^(github_pat_|ghp_)/.test(c)||c.length<30){alert("זה לא נראה כמו טוקן של GitHub. הוא צריך להתחיל ב-github_pat_");return}try{localStorage.setItem(GH_KEY,c)}catch(_){}renderAuth()}
   if(ghToken()){document.getElementById("sync").textContent="שולח התראת בדיקה…";liveNotify("test",(featuredGame()||allGames()[0]).key)}else document.getElementById("sync").textContent="אין טוקן – הדבק אותו ב-🔔 התראות";
 });
 
