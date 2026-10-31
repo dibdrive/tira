@@ -1010,8 +1010,8 @@ async function pushSend(build,cat){
   const tok=ghToken();if(!tok||!canEdit)return false;
   const payload={cat:cat||"live",he:inLang("he",build),ar:inLang("ar",build)};
   try{const r=await fetch("https://api.github.com/repos/dibdrive/tira/actions/workflows/notify.yml/dispatches",{method:"POST",headers:{Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"},body:JSON.stringify({ref:"main",inputs:{payload:JSON.stringify(payload)}})});
-    if(!r.ok){if(r.status===401){try{localStorage.removeItem(GH_KEY)}catch(_){}renderAuth();alert("הטוקן של GitHub שגוי או פג תוקף. לחץ על 🔔 התראות והדבק אותו שוב.")}document.getElementById("sync").textContent="ההתראה לא נשלחה ("+r.status+")";return false}return true}
-  catch(e){document.getElementById("sync").textContent="ההתראה לא נשלחה";return false}
+    if(!r.ok){if(r.status===401){try{localStorage.removeItem(GH_KEY)}catch(_){}renderAuth();alert("הטוקן של GitHub שגוי או פג תוקף. לחץ על 🔔 התראות והדבק אותו שוב.")}document.getElementById("sync").textContent="ההתראה לא נשלחה ("+r.status+")";return false}document.getElementById("sync").textContent="🔔 ההתראה נשלחה ✓";return true}
+  catch(e){document.getElementById("sync").textContent="ההתראה לא נשלחה ("+(e&&e.message||"רשת")+")";return false}
 }
 function liveNotify(kind,k,ev){
   const g=gameByKey(k);if(!g)return;
@@ -1032,7 +1032,7 @@ document.getElementById("auth").addEventListener("click",e=>{
   const v=prompt(cur?"התראות מוגדרות ✓\nאפשר להדביק טוקן חדש, או להשאיר ריק כדי לשלוח בדיקה:":"הדבק את טוקן ה-GitHub (מתחיל ב-github_pat_):","");
   if(v===null)return;
   if(v.trim()){try{localStorage.setItem(GH_KEY,v.trim())}catch(_){}renderAuth()}
-  if(ghToken()&&confirm("לשלוח התראת בדיקה לכל מי שהתקין את האפליקציה?"))liveNotify("test",(featuredGame()||allGames()[0]).key);
+  if(ghToken()){document.getElementById("sync").textContent="שולח התראת בדיקה…";liveNotify("test",(featuredGame()||allGames()[0]).key)}else document.getElementById("sync").textContent="אין טוקן – הדבק אותו ב-🔔 התראות";
 });
 
 // ===== Announcements, trainings, notification preferences, offline =====
