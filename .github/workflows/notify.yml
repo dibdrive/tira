@@ -8,6 +8,7 @@ on:
         default: ""
   schedule:
     - cron: "0 5 * * *"   # every morning ~07:00–08:00 Israel time: "game today" reminder
+    - cron: "0 9 * * *"   # ~11:00–12:00 Israel time: "training today" reminder
 permissions:
   contents: read
 concurrency:
@@ -26,9 +27,14 @@ jobs:
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
           PAYLOAD: ${{ github.event.inputs.payload }}
+          SCHED: ${{ github.event.schedule }}
         run: |
           if [ -n "$PAYLOAD" ]; then
             node .github/scripts/notify.mjs event
+          elif [ "$SCHED" = "0 9 * * *" ]; then
+            node .github/scripts/notify.mjs reminder training
+          elif [ -n "$SCHED" ]; then
+            node .github/scripts/notify.mjs reminder game
           else
             node .github/scripts/notify.mjs reminder
           fi
