@@ -102,8 +102,21 @@ async function reminderMode() {
   }
   for (const [k, x] of Object.entries(res)) if (x && x.comp === "cup" && x.date) games.push({ comp: "cup", o: x.opponent || "", home: !!x.home, date: x.date, time: x.time || "", stage: x.stage || "", x });
   const todays = games.filter(g => g.date === today && !(g.x.us != null && g.x.them != null));
-  if (!todays.length) { console.log("no game today", today); return; }
   const msgs = [];
+  // training reminder (only when there is no game today; cancelled trainings are skipped)
+  const tr = res._train || {};
+  const dow = new Date(today + "T12:00:00Z").getUTCDay();
+  const DAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  const DAY_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  const trs = todays.length ? [] : (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")])
+    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  for (const s of trs) {
+    msgs.push({ topic: topic("remind", "he"), title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}`,
+      body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
+    msgs.push({ topic: topic("remind", "ar"), title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}`,
+      body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
+  }
+  if (!todays.length && !msgs.length) { console.log("no game or training today", today); return; }
   for (const g of todays) {
     const heWhere = g.x.venue || (g.home ? "אצטדיון טירה" : (town[g.o] || [])[0] || "");
     const arWhere = g.x.venue || (g.home ? "ملعب الطيرة" : (town[g.o] || [])[1] || "");
