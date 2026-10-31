@@ -1,7 +1,7 @@
 // Sends push notifications for מ.כ. צעירי טירה via Firebase Cloud Messaging (HTTP v1).
 // Modes:
 //   node notify.mjs event     -> reads env PAYLOAD = JSON {cat, he:{title,body}, ar:{title,body}} (workflow_dispatch input)
-//   node notify.mjs reminder  -> morning reminder if there is a game today (Asia/Jerusalem)
+//   node notify.mjs reminder [game|training]  -> "game today" (07:00) / "training today" (11:00) reminders (Asia/Jerusalem)
 // Secret FIREBASE_SA = full JSON of a Firebase service-account key. DRY_RUN=1 prints instead of sending.
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -91,7 +91,7 @@ async function loadResults() {
   return out;
 }
 const isoFromDmy = s => { const [d, m, y] = s.split("/"); return `20${y}-${m}-${d}`; };
-async function reminderMode() {
+async function reminderMode(kind = "all") { // kind: game | training | all
   const today = process.env.TODAY || new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date()); // YYYY-MM-DD
   const { fix, oppAr, town } = parseSite();
   const res = await loadResults();
@@ -108,7 +108,7 @@ async function reminderMode() {
   const dow = new Date(today + "T12:00:00Z").getUTCDay();
   const DAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
   const DAY_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-  const trs = todays.length ? [] : (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")])
+  const trs = todays.length || kind === "game" ? [] : (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")])
     .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
   for (const s of trs) {
     msgs.push({ topic: topic("remind", "he"), title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}`,
@@ -116,6 +116,7 @@ async function reminderMode() {
     msgs.push({ topic: topic("remind", "ar"), title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}`,
       body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
   }
+  if (kind === "training") { if (!msgs.length) console.log("no training today", today); else await send(msgs); return; }
   if (!todays.length && !msgs.length) { console.log("no game or training today", today); return; }
   for (const g of todays) {
     const heWhere = g.x.venue || (g.home ? "אצטדיון טירה" : (town[g.o] || [])[0] || "");
@@ -131,4 +132,4 @@ async function reminderMode() {
 }
 
 const mode = process.argv[2];
-(mode === "reminder" ? reminderMode() : eventMode()).catch(e => { console.error(e); process.exit(1); });
+(mode === "reminder" ? reminderMode(process.argv[3]) : eventMode()).catch(e => { console.error(e); process.exit(1); });
