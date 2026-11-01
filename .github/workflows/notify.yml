@@ -6,9 +6,7 @@ on:
         description: 'JSON {"he":{"title","body"},"ar":{"title","body"}} — leave empty to run the "game today" reminder'
         required: false
         default: ""
-  schedule:
-    - cron: "0 5 * * *"   # every morning ~07:00–08:00 Israel time: "game today" reminder
-    - cron: "0 9 * * *"   # ~11:00–12:00 Israel time: "training today" reminder
+  # daily reminders (07:00 game / 11:00 training) now run in the Cloudflare Worker tira-push (cloudflare/tira-push.js)
 permissions:
   contents: read
 concurrency:
