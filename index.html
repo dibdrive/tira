@@ -206,6 +206,7 @@ html[lang="ar"]{--display:"Reem Kufi","Cairo",system-ui,sans-serif;--body:"Cairo
 .roster .pl:hover{background:var(--chalk)}
 .roster .pl:focus-visible{outline:2px solid var(--pitch)}
 .sctab tr.clk{cursor:pointer}
+.tblmore{display:block;margin:10px auto 0;font-weight:600}
 .sctab tr.clk:hover td{background:var(--chalk)}
 button.pchip{font:inherit}
 dialog#pdlg{border:none;border-radius:18px;padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
@@ -516,6 +517,14 @@ function scorerTotals(){
   for(const k in results){const cup=isCup(results[k]);(results[k].scorers||[]).forEach(s=>{const n=(s.name||"").trim();if(!n)return;m[n]=m[n]||{l:0,c:0};m[n][cup?"c":"l"]+=(s.goals||0)})}
   return m;
 }
+const TOP_N=4,tblOpen={};
+function rankTable(id,list){
+  const el=document.getElementById(id);let rank=0,prev=null;const open=!!tblOpen[id],more=list.length>TOP_N;
+  const rows=list.map(([n,l,c,tt])=>{if(tt!==prev){rank++;prev=tt}const no=noOf(n);return `<tr${no!=null?` data-player="${no}" class="clk"`:""}><td class="rank">${rank}</td><td class="nm">${esc(dispName(n))}</td><td>${l}</td><td>${c}</td><td class="tot">${tt}</td></tr>`});
+  el.innerHTML=`<table class="sctab"><thead><tr><th></th><th>${t("player")}</th><th>${t("league")}</th><th>${t("cup")}</th><th>${t("total")}</th></tr></thead><tbody>`+(open?rows:rows.slice(0,TOP_N)).join("")+`</tbody></table>`+
+    (more?`<button class="lnk tblmore" data-more="${id}" type="button">${open?(LANG==="ar"?"▲ عرض أقل":"▲ הצג פחות"):(LANG==="ar"?`▼ عرض الكل (${list.length})`:`▼ הצג את כולם (${list.length})`)}</button>`:"");
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(!b)return;tblOpen[b.dataset.more]=!tblOpen[b.dataset.more];b.dataset.more==="assists"?renderAssists():renderScorers()});
 function assistTotals(){
   const m={};
   for(const k in results){const cup=isCup(results[k]);(results[k].assists||[]).forEach(s=>{const n=(s.name||"").trim();if(!n)return;m[n]=m[n]||{l:0,c:0};m[n][cup?"c":"l"]+=(s.n||0)})}
@@ -525,18 +534,14 @@ function renderAssists(){
   const el=document.getElementById("assists");if(!el)return;
   const list=Object.entries(assistTotals()).map(([n,v])=>[n,v.l,v.c,v.l+v.c]).filter(r=>r[3]>0).sort((a,b)=>b[3]-a[3]||b[1]-a[1]||a[0].localeCompare(b[0],"he"));
   if(!list.length){el.innerHTML=`<p class="empty">${t("noAssists")}</p>`;return}
-  let rank=0,prev=null;
-  el.innerHTML=`<table class="sctab"><thead><tr><th></th><th>${t("player")}</th><th>${t("league")}</th><th>${t("cup")}</th><th>${t("total")}</th></tr></thead><tbody>`+
-    list.map(([n,l,c,tt],i)=>{if(tt!==prev){rank=i+1;prev=tt}const no=noOf(n);return `<tr${no!=null?` data-player="${no}" class="clk"`:""}><td class="rank">${rank}</td><td class="nm">${esc(dispName(n))}</td><td>${l}</td><td>${c}</td><td class="tot">${tt}</td></tr>`}).join("")+`</tbody></table>`;
+  rankTable("assists",list);
 }
 function renderScorers(){
   const m=scorerTotals();
   const list=Object.entries(m).map(([n,v])=>[n,v.l,v.c,v.l+v.c]).sort((a,b)=>b[3]-a[3]||b[1]-a[1]||a[0].localeCompare(b[0],"he"));
   const el=document.getElementById("scorers");
   if(!list.length){el.innerHTML=`<p class="empty">${t("noScorers")}</p>`;return}
-  let rank=0,prev=null;
-  el.innerHTML=`<table class="sctab"><thead><tr><th></th><th>${t("player")}</th><th>${t("league")}</th><th>${t("cup")}</th><th>${t("total")}</th></tr></thead><tbody>`+
-    list.map(([n,l,c,tt],i)=>{if(tt!==prev){rank=i+1;prev=tt}const no=noOf(n);return `<tr${no!=null?` data-player="${no}" class="clk"`:""}><td class="rank">${rank}</td><td class="nm">${esc(dispName(n))}</td><td>${l}</td><td>${c}</td><td class="tot">${tt}</td></tr>`}).join("")+`</tbody></table>`;
+  rankTable("scorers",list);
 }
 const STAFF=[{he:"מוחמד עיסווי",ar:"محمد عيساوي",role:"coachRole",img:342751}];
 function renderStaff(){const el=document.getElementById("staff");if(!el)return;el.innerHTML=STAFF.map(s=>`<div class="sp"><img src="https://www.football.org.il/ImageServer/GetImage.ashx?type=2&id=${s.img}&width=200&height=190" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><div><b>${esc(LANG==="ar"?s.ar:s.he)}</b><span>${t(s.role)}</span></div></div>`).join("")}
