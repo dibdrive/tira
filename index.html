@@ -982,15 +982,27 @@ if(NATIVE)document.documentElement.classList.add("native");
 if(NATIVE){const ext=u=>{try{const x=new URL(u,location.href);return /^https?:$/.test(x.protocol)&&x.host!==location.host}catch(_){return false}};
   document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!ext(a.href))return;e.preventDefault();e.stopImmediatePropagation();location.href=a.href},true);
   const wo=window.open.bind(window);window.open=(u,...r)=>{if(u&&ext(u)){location.href=new URL(u,location.href).href;return null}return wo(u,...r)}}
+var PUSH_ST=null,pushBusy=false,pushAgain=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function pushSubscribe(){
   const FM=CP.FirebaseMessaging;if(!FM)return;
+  if(pushBusy){pushAgain=true;return}pushBusy=true;
   try{
-    let p=await FM.checkPermissions();if(p.receive!=="granted")p=await FM.requestPermissions();if(p.receive!=="granted")return;
+    let p=await FM.checkPermissions();if(p.receive!=="granted")p=await FM.requestPermissions();
+    if(p.receive!=="granted"){PUSH_ST={s:"denied"};return}
     if(window.Capacitor.getPlatform()==="android"){try{await FM.createChannel({id:"tira",name:"משחקים ותוצאות",description:"גולים, תוצאות ותזכורות",importance:4,visibility:1,vibration:true})}catch(e){}}
-    const want=new Set((PREF_CATS[pushMode()]||PREF_CATS.all).map(c=>c+"_"+LANG));
-    for(const c of ["live","result","remind","ann"])for(const l of ["he","ar"]){const tp=c+"_"+l;try{if(want.has(tp))await FM.subscribeToTopic({topic:tp});else await FM.unsubscribeFromTopic({topic:tp})}catch(e){}}
-  }catch(e){console.warn("push",e)}
+    // iOS: topics only work after Apple's APNs token reached Firebase -> wait for an FCM token first
+    let tok="",lastErr="";for(let i=0;i<10&&!tok;i++){try{tok=(await FM.getToken()).token||""}catch(e){lastErr=e&&e.message||String(e);await sleep(1500)}}
+    if(!tok){PUSH_ST={s:"err",m:"token: "+lastErr};return}
+    const want=new Set((PREF_CATS[pushMode()]||PREF_CATS.all).map(c=>c+"_"+LANG));let bad="";
+    for(const c of ["live","result","remind","ann"])for(const l of ["he","ar"]){const tp=c+"_"+l;
+      for(let k=0;k<3;k++){try{if(want.has(tp))await FM.subscribeToTopic({topic:tp});else await FM.unsubscribeFromTopic({topic:tp});break}catch(e){if(k===2)bad=tp+": "+(e&&e.message||e);else await sleep(1500)}}}
+    PUSH_ST=bad?{s:"err",m:bad}:{s:"ok"};
+  }catch(e){PUSH_ST={s:"err",m:e&&e.message||String(e)};console.warn("push",e)}
+  finally{pushBusy=false;renderPrefs();if(pushAgain){pushAgain=false;setTimeout(pushSubscribe,500)}}
 }
+if(NATIVE&&CP.FirebaseMessaging){try{CP.FirebaseMessaging.addListener("apnsTokenReceived",()=>setTimeout(pushSubscribe,300))}catch(e){}
+  let lastPS=Date.now();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(PUSH_ST?.s!=="ok"||Date.now()-lastPS>6*3600e3)){lastPS=Date.now();pushSubscribe()}})}
 if(NATIVE){pushSubscribe();document.getElementById("langBtn").addEventListener("click",()=>setTimeout(pushSubscribe,0))}
 async function shareFile(blob,file,txt){
   if(NATIVE&&CP.Filesystem&&CP.Share){
@@ -1111,9 +1123,11 @@ function renderPrefs(){
   const sec=document.getElementById("prefSec");if(!sec)return;
   if(!NATIVE){sec.hidden=true;return}
   sec.hidden=false;const m=pushMode();
-  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div>`;
+  const st=PUSH_ST,ar=LANG==="ar";
+  const stTxt=!st?(ar?"⏳ جارٍ تفعيل الإشعارات…":"⏳ מפעיל התראות…"):st.s==="ok"?(ar?"✅ الإشعارات مفعّلة على هذا الهاتف":"✅ ההתראות פעילות בטלפון הזה"):st.s==="denied"?(ar?"🚫 الإشعارات مرفوضة – فعّلها في إعدادات الهاتف ← الإشعارات":"🚫 ההתראות חסומות – יש לאפשר בהגדרות הטלפון ← התראות"):(ar?"⚠️ تعذّر التفعيل":"⚠️ ההתראות לא הופעלו")+` <small dir="ltr">(${esc(String(st.m||"").slice(0,120))})</small>`;
+  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div><p class="hint" style="margin:8px 0 0">${stTxt}${st&&st.s!=="ok"?` <button class="lnk" data-pref-retry type="button">${ar?"إعادة المحاولة":"נסה שוב"}</button>`:""}</p>`;
 }
-document.getElementById("prefSec").addEventListener("click",e=>{const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
+document.getElementById("prefSec").addEventListener("click",e=>{if(e.target.closest("[data-pref-retry]")){PUSH_ST=null;renderPrefs();pushSubscribe();return}const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
 // --- offline banner + caching ---
 var NET_CACHE=null;
 function renderNet(){const b=document.getElementById("netBar");if(b)b.hidden=!(navigator.onLine===false&&NET_CACHE!==false)}
