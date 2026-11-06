@@ -9,6 +9,8 @@ const ADMIN = "dibdrive";
 const CATS = ["live", "result", "remind", "ann"];
 const SNDS = ["goal_us", "goal_them", "whistle"];
 const SND_CH = { goal_us: "tira_us", goal_them: "tira_them", whistle: "tira_whistle" };
+// how long Google keeps a notification for a phone that is offline (or behind a VPN that blocks it)
+const TTL = { live: 7200, result: 7200, ann: 86400, remind: 21600 };
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Max-Age": "86400" };
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const okTokens = new Map();
@@ -56,8 +58,8 @@ async function sendAll(env, msgs) {
       method: "POST", headers: { Authorization: "Bearer " + at, "Content-Type": "application/json" },
       body: JSON.stringify({ message: { topic: m.topic,
         notification: { title: m.title, body: m.body },
-        android: { priority: "high", notification: { sound: m.snd || "default", channel_id: SND_CH[m.snd] || "tira" } },
-        apns: { headers: { "apns-priority": "10" }, payload: { aps: { sound: m.snd ? m.snd + ".wav" : "default" } } } } }) });
+        android: { priority: "high", ttl: (m.ttl || 86400) + "s", notification: { sound: m.snd || "default", channel_id: SND_CH[m.snd] || "tira" } },
+        apns: { headers: { "apns-priority": "10", "apns-expiration": String(Math.floor(Date.now() / 1000) + (m.ttl || 86400)) }, payload: { aps: { sound: m.snd ? m.snd + ".wav" : "default" } } } } }) });
     if (!r.ok) console.error("fcm " + m.topic + " " + r.status + " " + (await r.text()).slice(0, 300));
     return { topic: m.topic, status: r.status };
   }));
@@ -93,6 +95,8 @@ async function loadSite() {
   return { fix, oppAr, town };
 }
 const isoFromDmy = s => { const [d, m, y] = s.split("/"); return `20${y}-${m}-${d}`; };
+// seconds from now until hh:mm today in Israel (at least 30 min; 6 h when there is no time)
+const ttlUntil = hhmm => { const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || ""); if (!m) return 21600; const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map(x => [x.type, x.value])); return Math.max(1800, ((+m[1]) * 60 + (+m[2]) - (+p.hour * 60 + +p.minute)) * 60); };
 const ilNow = () => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour }; };
 
 async function reminderMsgs(kind, today) {
@@ -111,9 +115,10 @@ async function reminderMsgs(kind, today) {
       const arWhere = g.x.venue || (g.home ? "ملعب الطيرة" : (town[g.o] || [])[1] || "");
       const heComp = g.comp === "cup" ? `גביע ילדים ב׳${g.stage ? " · " + g.stage : ""}` : `ליגת ילדים ב׳ · מחזור ${g.r}`;
       const arComp = g.comp === "cup" ? "كأس الأولاد ب׳" : `دوري الأولاد ب׳ · المرحلة ${g.r}`;
-      msgs.push({ topic: "remind_he", title: `⚽ היום משחק!${g.time ? " " + g.time : ""}`,
+      const ttl = ttlUntil(g.time);
+      msgs.push({ topic: "remind_he", ttl, title: `⚽ היום משחק!${g.time ? " " + g.time : ""}`,
         body: `צעירי טירה מול ${g.o} · ${g.home ? "בית" : "חוץ"}${heWhere ? " · " + heWhere : ""}\n${heComp} · בהצלחה! 💙` });
-      msgs.push({ topic: "remind_ar", title: `⚽ مباراة اليوم!${g.time ? " " + g.time : ""}`,
+      msgs.push({ topic: "remind_ar", ttl, title: `⚽ مباراة اليوم!${g.time ? " " + g.time : ""}`,
         body: `شباب الطيرة ضد ${oppAr[g.o] || g.o} · ${g.home ? "على أرضنا" : "خارج أرضنا"}${arWhere ? " · " + arWhere : ""}\n${arComp} · بالتوفيق! 💙` });
     }
   } else if (kind === "training" && !todays.length) {
@@ -123,8 +128,9 @@ async function reminderMsgs(kind, today) {
     const DAY_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const trs = (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")]).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
     for (const s of trs) {
-      msgs.push({ topic: "remind_he", title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}`, body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
-      msgs.push({ topic: "remind_ar", title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}`, body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
+      const ttl = ttlUntil(s.time);
+      msgs.push({ topic: "remind_he", ttl, title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}`, body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
+      msgs.push({ topic: "remind_ar", ttl, title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}`, body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
     }
   }
   return msgs;
@@ -144,7 +150,7 @@ export default {
     let p; try { p = await req.json(); } catch { return json({ error: "bad json" }, 400); }
     const cat = CATS.includes(p.cat) ? p.cat : "live";
     const snd = SNDS.includes(p.snd) ? p.snd : undefined;
-    const msgs = ["he", "ar"].filter(l => p[l] && p[l].title).map(l => ({ topic: `${cat}_${l}`, title: String(p[l].title).slice(0, 120), body: String(p[l].body || "").slice(0, 300), snd }));
+    const msgs = ["he", "ar"].filter(l => p[l] && p[l].title).map(l => ({ topic: `${cat}_${l}`, title: String(p[l].title).slice(0, 120), body: String(p[l].body || "").slice(0, 300), snd, ttl: TTL[cat] }));
     if (!msgs.length) return json({ error: "empty" }, 400);
     let out; try { out = await sendAll(env, msgs); } catch (e) { console.error("send failed: " + String(e.message || e)); return json({ error: String(e.message || e) }, 500); }
     const ok = out.every(o => o.status === 200);
