@@ -32,6 +32,7 @@ async function accessToken() {
 
 // custom sounds bundled in the app (v1.0.2+); older app versions fall back to the default channel/sound
 const SND_CH = { goal_us: "tira_us", goal_them: "tira_them", whistle: "tira_whistle" };
+const TTL = { live: 7200, result: 7200, ann: 86400, remind: 21600 };
 async function send(msgs) {
   const clean = msgs.filter(m => m && m.title);
   if (!clean.length) { console.log("nothing to send"); return; }
@@ -43,8 +44,8 @@ async function send(msgs) {
       body: JSON.stringify({ message: {
         topic: m.topic,
         notification: { title: m.title.slice(0, 120), body: (m.body || "").slice(0, 300) },
-        android: { priority: "high", notification: { sound: m.snd || "default", channel_id: SND_CH[m.snd] || "tira" } },
-        apns: { payload: { aps: { sound: m.snd ? m.snd + ".wav" : "default" } } },
+        android: { priority: "high", ttl: (m.ttl || 86400) + "s", notification: { sound: m.snd || "default", channel_id: SND_CH[m.snd] || "tira" } },
+        apns: { headers: { "apns-expiration": String(Math.floor(Date.now() / 1000) + (m.ttl || 86400)) }, payload: { aps: { sound: m.snd ? m.snd + ".wav" : "default" } } },
       } }),
     });
     console.log(m.topic, r.status, (await r.text()).slice(0, 200));
@@ -57,7 +58,7 @@ async function eventMode() {
   const p = JSON.parse(process.env.PAYLOAD || "{}");
   const cat = ["live", "result", "remind", "ann"].includes(p.cat) ? p.cat : "live";
   const snd = ["goal_us", "goal_them", "whistle"].includes(p.snd) ? p.snd : undefined;
-  await send(["he", "ar"].map(l => p[l] && { topic: topic(cat, l), title: String(p[l].title || ""), body: String(p[l].body || ""), snd }));
+  await send(["he", "ar"].map(l => p[l] && { topic: topic(cat, l), title: String(p[l].title || ""), body: String(p[l].body || ""), snd, ttl: TTL[cat] }));
 }
 
 // ---------- reminder mode ----------
