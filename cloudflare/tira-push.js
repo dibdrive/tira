@@ -1,6 +1,7 @@
 // tira-push: Cloudflare Worker for מ.כ. צעירי טירה push notifications (backup copy of the deployed code)
 // Dashboard: Workers & Pages > tira-push. URL: https://tira-push.dib-arkan.workers.dev/
-// - POST /  (Authorization: Bearer <GitHub token of the admin "dibdrive">) body {cat, snd?, he:{title,body}, ar:{title,body}} -> instant push
+// - POST /  (Authorization: Bearer <GitHub token of the admin "dibdrive">) body {cat, snd?, team?, he:{title,body}, ar:{title,body}} -> instant push
+//   team: id from teams.js ("kc", "nc", ...); topics are "<team>_<cat>_<lang>", ילדים ב׳ (kb / no team) keeps "<cat>_<lang>"
 // - Cron "0 4,5,8,9 * * *" (UTC): 07:00 Israel = "game today" reminder, 11:00 Israel = "training today" reminder (works in summer and winter time)
 // - GET /?dry=game|training  -> shows what the reminder would send today (nothing is sent)
 // Secret FIREBASE_SA = full JSON of a Firebase service-account key (Settings > Variables and Secrets).
@@ -88,11 +89,15 @@ async function loadResults() {
   return out;
 }
 async function loadSite() {
-  const html = await (await fetch("https://raw.githubusercontent.com/dibdrive/tira/main/index.html", { cf: { cacheTtl: 300 } })).text();
-  const fix = JSON.parse(html.slice(html.indexOf("const FIX = [") + 12, html.indexOf("].map(([r,d,o,h,tm,od])") + 1));
-  const oppAr = JSON.parse(html.match(/const OPP_AR=(\{[^\n]*?\});/)[1]);
-  const town = JSON.parse(html.match(/const TOWN=(\{[^\n]*?\});/)[1]);
-  return { fix, oppAr, town };
+  const raw = f => fetch("https://raw.githubusercontent.com/dibdrive/tira/main/" + f, { cf: { cacheTtl: 300 } }).then(r => r.text());
+  const [html, tjs] = await Promise.all([raw("index.html"), raw("teams.js")]);
+  const nf = html.includes("const FIX = (TD?TD.fix:["), a = nf ? html.indexOf("const FIX = (TD?TD.fix:[") + 23 : html.indexOf("const FIX = [") + 12;
+  const teams = { kb: { he: "ילדים ב׳", ar: "الأولاد ب׳",
+    fix: JSON.parse(html.slice(a, html.indexOf(nf ? "]).map(([r,d,o,h,tm,od])" : "].map(([r,d,o,h,tm,od])") + 1)),
+    oppAr: JSON.parse(html.match(/const OPP_AR=(?:TD\?TD\.oppAr:)?(\{[^\n]*?\});/)[1]),
+    town: JSON.parse(html.match(/const TOWN=(?:TD\?TD\.town:)?(\{[^\n]*?\});/)[1]) } };
+  try { const T = JSON.parse(tjs.slice(tjs.indexOf("window.TEAMS=") + 13, tjs.lastIndexOf(";"))); for (const id in T) if (id !== "kb") teams[id] = T[id]; } catch (e) { console.error("teams.js: " + e.message); }
+  return teams;
 }
 const isoFromDmy = s => { const [d, m, y] = s.split("/"); return `20${y}-${m}-${d}`; };
 // seconds from now until hh:mm today in Israel (at least 30 min; 6 h when there is no time)
@@ -100,7 +105,18 @@ const ttlUntil = hhmm => { const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || ""); if (
 const ilNow = () => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour }; };
 
 async function reminderMsgs(kind, today) {
-  const [{ fix, oppAr, town }, res] = await Promise.all([loadSite(), loadResults()]);
+  const [teams, all] = await Promise.all([loadSite(), loadResults()]);
+  const msgs = [];
+  for (const id in teams) {
+    const pre = id === "kb" ? "" : id + "__", res = {};
+    for (const k in all) { if (id === "kb" ? !k.includes("__") : k.startsWith(pre)) res[k.slice(pre.length)] = all[k]; }
+    msgs.push(...teamReminder(kind, today, id, teams[id], res));
+  }
+  return msgs;
+}
+function teamReminder(kind, today, id, team, res) {
+  const { fix, oppAr = {}, town = {} } = team, tp = (id === "kb" ? "" : id + "_") + "remind_", lbl = l => " · " + (team[l] || "");
+  const S = team.s || { he: { leagueFull: "ליגת ילדים ב׳", cupFull: "גביע ילדים ב׳" }, ar: { leagueFull: "دوري الأولاد ب׳", cupFull: "كأس الأولاد ب׳" } };
   const games = [];
   for (const [r, d, o, h, tm] of fix) {
     const x = res["r" + r] || {};
@@ -113,12 +129,12 @@ async function reminderMsgs(kind, today) {
     for (const g of todays) {
       const heWhere = g.x.venue || (g.home ? "אצטדיון טירה" : (town[g.o] || [])[0] || "");
       const arWhere = g.x.venue || (g.home ? "ملعب الطيرة" : (town[g.o] || [])[1] || "");
-      const heComp = g.comp === "cup" ? `גביע ילדים ב׳${g.stage ? " · " + g.stage : ""}` : `ליגת ילדים ב׳ · מחזור ${g.r}`;
-      const arComp = g.comp === "cup" ? "كأس الأولاد ب׳" : `دوري الأولاد ب׳ · المرحلة ${g.r}`;
+      const heComp = g.comp === "cup" ? `${S.he.cupFull}${g.stage ? " · " + g.stage : ""}` : `${S.he.leagueFull} · מחזור ${g.r}`;
+      const arComp = g.comp === "cup" ? S.ar.cupFull : `${S.ar.leagueFull} · المرحلة ${g.r}`;
       const ttl = ttlUntil(g.time);
-      msgs.push({ topic: "remind_he", ttl, title: `⚽ היום משחק!${g.time ? " " + g.time : ""}`,
+      msgs.push({ topic: tp + "he", ttl, title: `⚽ היום משחק!${g.time ? " " + g.time : ""}${lbl("he")}`,
         body: `צעירי טירה מול ${g.o} · ${g.home ? "בית" : "חוץ"}${heWhere ? " · " + heWhere : ""}\n${heComp} · בהצלחה! 💙` });
-      msgs.push({ topic: "remind_ar", ttl, title: `⚽ مباراة اليوم!${g.time ? " " + g.time : ""}`,
+      msgs.push({ topic: tp + "ar", ttl, title: `⚽ مباراة اليوم!${g.time ? " " + g.time : ""}${lbl("ar")}`,
         body: `شباب الطيرة ضد ${oppAr[g.o] || g.o} · ${g.home ? "على أرضنا" : "خارج أرضنا"}${arWhere ? " · " + arWhere : ""}\n${arComp} · بالتوفيق! 💙` });
     }
   } else if (kind === "training" && !todays.length) {
@@ -129,8 +145,8 @@ async function reminderMsgs(kind, today) {
     const trs = (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")]).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
     for (const s of trs) {
       const ttl = ttlUntil(s.time);
-      msgs.push({ topic: "remind_he", ttl, title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}`, body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
-      msgs.push({ topic: "remind_ar", ttl, title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}`, body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
+      msgs.push({ topic: tp + "he", ttl, title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}${lbl("he")}`, body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
+      msgs.push({ topic: tp + "ar", ttl, title: `🗓️ اليوم تدريب${s.time ? " الساعة " + s.time : ""}${lbl("ar")}`, body: `شباب الطيرة · ${DAY_AR[dow]}${s.place ? " · " + s.place : ""}\nنلتقي في الملعب! 💙` });
     }
   }
   return msgs;
@@ -150,7 +166,8 @@ export default {
     let p; try { p = await req.json(); } catch { return json({ error: "bad json" }, 400); }
     const cat = CATS.includes(p.cat) ? p.cat : "live";
     const snd = SNDS.includes(p.snd) ? p.snd : undefined;
-    const msgs = ["he", "ar"].filter(l => p[l] && p[l].title).map(l => ({ topic: `${cat}_${l}`, title: String(p[l].title).slice(0, 120), body: String(p[l].body || "").slice(0, 300), snd, ttl: TTL[cat] }));
+    const team = /^[a-z][a-z0-9]{0,9}$/.test(p.team || "") && p.team !== "kb" ? p.team + "_" : "";
+    const msgs = ["he", "ar"].filter(l => p[l] && p[l].title).map(l => ({ topic: `${team}${cat}_${l}`, title: String(p[l].title).slice(0, 120), body: String(p[l].body || "").slice(0, 300), snd, ttl: TTL[cat] }));
     if (!msgs.length) return json({ error: "empty" }, 400);
     let out; try { out = await sendAll(env, msgs); } catch (e) { console.error("send failed: " + String(e.message || e)); return json({ error: String(e.message || e) }, 500); }
     const ok = out.every(o => o.status === 200);
