@@ -560,7 +560,7 @@ function renderScorers(){
   if(!list.length){el.innerHTML=`<p class="empty">${t("noScorers")}</p>`;return}
   rankTable("scorers",list);
 }
-const STAFF=[{he:"מוחמד עיסווי",ar:"محمد عيساوي",role:"coachRole",img:342751}];
+const STAFF=TD?(TD.staff||[]):[{he:"מוחמד עיסווי",ar:"محمد عيساوي",role:"coachRole",img:342751}];
 function renderStaff(){const el=document.getElementById("staff");if(!el)return;el.innerHTML=STAFF.map(s=>`<div class="sp"><img src="https://www.football.org.il/ImageServer/GetImage.ashx?type=2&id=${s.img}&width=200&height=190" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><div><b>${esc(LANG==="ar"?s.ar:s.he)}</b><span>${t(s.role)}</span></div></div>`).join("")}
 function renderRoster(){
   renderStaff();
