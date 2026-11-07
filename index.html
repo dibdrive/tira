@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-title" content="צעירי טירה">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<script>/* which team is shown: ?t=<id> or the last one picked; default ילדים ב׳ (kb) */(function(){var q=null,v=null;try{q=new URLSearchParams(location.search).get("t")}catch(e){}try{v=localStorage.getItem("tira-team")}catch(e){}window.TEAM=q||v||"kb";if(q){try{localStorage.setItem("tira-team",q)}catch(e){}}})();</script>
+<script src="teams.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -301,11 +303,18 @@ header.hero::before,header.hero::after{pointer-events:none}
 .auth .lnk{color:var(--pitch);background:var(--pitch-ink);text-decoration:none;padding:7px 14px;border-radius:99px;font-size:14px}
 .auth span{opacity:.9}
 .stats-note{position:relative;font-size:12px;opacity:.8;margin-top:6px}
+.teampick{position:relative;z-index:1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-inline-end:70px}
+.teampick::-webkit-scrollbar{display:none}
+.teampick a{flex:none;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.35);white-space:nowrap}
+.teampick a[aria-current="true"]{background:#fff;color:var(--pitch)}
+html.nonums .pl .no,html.nonums .pchip b,html.nonums .pnb,html.nonums .pno{display:none}
+.tfollow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 </style>
 <div class="netbar" id="netBar" hidden></div>
 <div class="wrap">
   <header class="hero">
     <button class="langbtn" id="langBtn" type="button">عربي</button>
+    <nav class="teampick" id="teamPick" aria-label="קבוצה"></nav>
     <div class="eyebrow" data-t="eyebrow">ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27</div>
     <div class="titlerow"><h1 data-t="team">מ.כ. צעירי טירה</h1><img class="crest" src="data:image/webp;base64,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" alt="סמל מ.כ. צעירי טירה" width="80" height="80"></div>
     <div class="stats" id="stats"></div>
@@ -374,7 +383,10 @@ header.hero::before,header.hero::after{pointer-events:none}
 
 <script>
 const T = "מ.כ. צעירי טירה";
-const FIX = [
+const TEAM=(window.TEAMS&&window.TEAMS[window.TEAM])?window.TEAM:"kb",TD=TEAM==="kb"?null:window.TEAMS[TEAM],NUMS=!TD||TD.nums!==false;
+if(!NUMS)document.documentElement.classList.add("nonums");
+const DK=k=>TEAM==="kb"?k:TEAM+"__"+k; /* Firestore doc id: ילדים ב׳ keeps plain ids, other teams are prefixed */
+const FIX = (TD?TD.fix:[
  [1,"18/10/26","שמשון בני טייבה",1,"19:30","14/10/26"],[2,"28/10/26","איחוד בני בקה",0,"","17/10/26"],
  [3,"31/10/26","בית\"ר כ\"ס שלומי",1,"","28/10/26"],[4,"14/11/26","הפועל עליה כפר סבא 2",0,"","31/10/26"],
  [5,"28/11/26","מ.כ. טייבה",1],[6,"05/12/26","מ.כ. בני רעננה",0],
@@ -390,13 +402,13 @@ const FIX = [
  [25,"01/05/27","הפועל חדרה מערב",0],[26,"08/05/27","הפועל אורנית",1],
  [27,"15/05/27","מכבי השרון נתניה",0],[28,"18/05/27","מ.ס. איחוד דרום השרון מערב",1],
  [29,"22/05/27","מ.ס. קדימה צורן 2",0],[30,"29/05/27","הפועל כפר קאסם שועאע 2",1]
-].map(([r,d,o,h,tm,od])=>{const pd=s=>{const [dd,mm,yy]=s.split("/").map(Number);return new Date(2000+yy,mm-1,dd)};return {key:"r"+r,comp:"league",r,o,home:!!h,date:pd(d),time:tm||"",orig:od?pd(od):null}});
-const PHOTO={1:966326,2:611244,4:1030927,5:966316,7:1008095,8:966315,9:966320,10:1031578,11:966324,12:966327,14:1031579,15:989012,17:1001074,19:966335,20:966319,30:608943,41:966325,80:600280,99:966321};
+]).map(([r,d,o,h,tm,od])=>{const pd=s=>{const [dd,mm,yy]=s.split("/").map(Number);return new Date(2000+yy,mm-1,dd)};return {key:"r"+r,comp:"league",r,o,home:!!h,date:pd(d),time:tm||"",orig:od?pd(od):null}});
+const PHOTO=TD?TD.photo:{1:966326,2:611244,4:1030927,5:966316,7:1008095,8:966315,9:966320,10:1031578,11:966324,12:966327,14:1031579,15:989012,17:1001074,19:966335,20:966319,30:608943,41:966325,80:600280,99:966321};
 const photo=no=>PHOTO[no]?`https://www.football.org.il/ImageServer/GetImage.ashx?type=2&id=${PHOTO[no]}&width=200&height=190`:"";
-const ROSTER=[[1,"כרים עתילי","שוער"],[2,"חמזה פדילה"],[4,"נדים מנסור"],[5,"אבראהים נאסר"],[7,"מוחמד עבד אלחי"],[8,"יוסף בשארה"],[9,"מוחמד עבד אל חי"],[10,"זוהיר נאסר"],[11,"אדם סולטאן"],[12,"כארם כורי"],[14,"עבד אלפתאח פדילה"],[15,"איהם ראבי"],[17,"מוחמד יאסין"],[19,"סנד שתיווי"],[20,"סובחי סולטאן"],[30,"זאן אלדין בשארה"],[41,"נסר דעאס"],[80,"עבד אל רחים חסקיה"],[99,"יוסף עבד אל חי","שוער"]];
-const AR_NAMES={1:"كريم عتيلي",2:"حمزة فضيلة",4:"نديم منصور",5:"إبراهيم ناصر",7:"محمد عبد الحي",8:"يوسف بشارة",9:"محمد عبد الحي",10:"زهير ناصر",11:"آدم سلطان",12:"كرم كوري",14:"عبد الفتاح فضيلة",15:"أيهم رابي",17:"محمد ياسين",19:"سند شتيوي",20:"صبحي سلطان",30:"زين الدين بشارة",41:"نصر دعاس",80:"عبد الرحيم خاسكية",99:"يوسف عبد الحي"};
-const OPP_AR={"שמשון בני טייבה":"شمشون أبناء الطيبة","איחוד בני בקה":"اتحاد أبناء باقة","בית\"ר כ\"ס שלומי":"بيتار كفار سابا شلومي","הפועל עליה כפר סבא 2":"هبوعيل عاليا كفار سابا 2","מ.כ. טייבה":"م.ك. الطيبة","מ.כ. בני רעננה":"م.ك. أبناء رعنانا","בני הרצליה":"أبناء هرتسليا","מ.כ.ע אריאל 2":"م.ك.ع أريئيل 2","מ.ס. טירה":"م.س الطيرة","הפועל חדרה מערב":"هبوعيل الخضيرة الغربية","הפועל אורנית":"هبوعيل أورانيت","מכבי השרון נתניה":"مكابي هشارون نتانيا","מ.ס. איחוד דרום השרון מערב":"م.س اتحاد جنوب الشارون الغربي","מ.ס. קדימה צורן 2":"م.س كديما تسوران 2","הפועל כפר קאסם שועאע 2":"هبوعيل كفر قاسم شعاع 2","הפועל כפר סבא מערב":"هبوعيل كفار سابا الغربية","הפועל כפ״ס אור":"هبوعيل كفار سابا أور"};
-const TOWN={"שמשון בני טייבה":["טייבה","الطيبة"],"איחוד בני בקה":["באקה אל גרביה","باقة الغربية"],"בית\"ר כ\"ס שלומי":["כפר סבא","كفار سابا"],"הפועל עליה כפר סבא 2":["כפר סבא","كفار سابا"],"מ.כ. טייבה":["טייבה","الطيبة"],"מ.כ. בני רעננה":["רעננה","رعنانا"],"בני הרצליה":["הרצליה","هرتسليا"],"מ.כ.ע אריאל 2":["אריאל","أريئيل"],"מ.ס. טירה":["טירה","الطيرة"],"הפועל חדרה מערב":["חדרה","الخضيرة"],"הפועל אורנית":["אורנית","أورانيت"],"מכבי השרון נתניה":["נתניה","نتانيا"],"מ.ס. קדימה צורן 2":["קדימה צורן","كديما تسوران"],"הפועל כפר קאסם שועאע 2":["כפר קאסם","كفر قاسم"],"הפועל כפר סבא מערב":["כפר סבא","كفار سابا"],"הפועל כפ״ס אור":["כפר סבא","كفار سابا"]};
+const ROSTER=TD?TD.roster:[[1,"כרים עתילי","שוער"],[2,"חמזה פדילה"],[4,"נדים מנסור"],[5,"אבראהים נאסר"],[7,"מוחמד עבד אלחי"],[8,"יוסף בשארה"],[9,"מוחמד עבד אל חי"],[10,"זוהיר נאסר"],[11,"אדם סולטאן"],[12,"כארם כורי"],[14,"עבד אלפתאח פדילה"],[15,"איהם ראבי"],[17,"מוחמד יאסין"],[19,"סנד שתיווי"],[20,"סובחי סולטאן"],[30,"זאן אלדין בשארה"],[41,"נסר דעאס"],[80,"עבד אל רחים חסקיה"],[99,"יוסף עבד אל חי","שוער"]];
+const AR_NAMES=TD?TD.arNames:{1:"كريم عتيلي",2:"حمزة فضيلة",4:"نديم منصور",5:"إبراهيم ناصر",7:"محمد عبد الحي",8:"يوسف بشارة",9:"محمد عبد الحي",10:"زهير ناصر",11:"آدم سلطان",12:"كرم كوري",14:"عبد الفتاح فضيلة",15:"أيهم رابي",17:"محمد ياسين",19:"سند شتيوي",20:"صبحي سلطان",30:"زين الدين بشارة",41:"نصر دعاس",80:"عبد الرحيم خاسكية",99:"يوسف عبد الحي"};
+const OPP_AR=TD?TD.oppAr:{"שמשון בני טייבה":"شمشون أبناء الطيبة","איחוד בני בקה":"اتحاد أبناء باقة","בית\"ר כ\"ס שלומי":"بيتار كفار سابا شلومي","הפועל עליה כפר סבא 2":"هبوعيل عاليا كفار سابا 2","מ.כ. טייבה":"م.ك. الطيبة","מ.כ. בני רעננה":"م.ك. أبناء رعنانا","בני הרצליה":"أبناء هرتسليا","מ.כ.ע אריאל 2":"م.ك.ع أريئيل 2","מ.ס. טירה":"م.س الطيرة","הפועל חדרה מערב":"هبوعيل الخضيرة الغربية","הפועל אורנית":"هبوعيل أورانيت","מכבי השרון נתניה":"مكابي هشارون نتانيا","מ.ס. איחוד דרום השרון מערב":"م.س اتحاد جنوب الشارون الغربي","מ.ס. קדימה צורן 2":"م.س كديما تسوران 2","הפועל כפר קאסם שועאע 2":"هبوعيل كفر قاسم شعاع 2","הפועל כפר סבא מערב":"هبوعيل كفار سابا الغربية","הפועל כפ״ס אור":"هبوعيل كفار سابا أور"};
+const TOWN=TD?TD.town:{"שמשון בני טייבה":["טייבה","الطيبة"],"איחוד בני בקה":["באקה אל גרביה","باقة الغربية"],"בית\"ר כ\"ס שלומי":["כפר סבא","كفار سابا"],"הפועל עליה כפר סבא 2":["כפר סבא","كفار سابا"],"מ.כ. טייבה":["טייבה","الطيبة"],"מ.כ. בני רעננה":["רעננה","رعنانا"],"בני הרצליה":["הרצליה","هرتسليا"],"מ.כ.ע אריאל 2":["אריאל","أريئيل"],"מ.ס. טירה":["טירה","الطيرة"],"הפועל חדרה מערב":["חדרה","الخضيرة"],"הפועל אורנית":["אורנית","أورانيت"],"מכבי השרון נתניה":["נתניה","نتانيا"],"מ.ס. קדימה צורן 2":["קדימה צורן","كديما تسوران"],"הפועל כפר קאסם שועאע 2":["כפר קאסם","كفر قاسم"],"הפועל כפר סבא מערב":["כפר סבא","كفار سابا"],"הפועל כפ״ס אור":["כפר סבא","كفار سابا"]};
 const HOME_VENUE="אצטדיון טירה";
 
 // ===== Language =====
@@ -404,9 +416,9 @@ let LANG=(()=>{try{const v=localStorage.getItem("tira-lang");if(v==="ar"||v==="h
 const S={
 he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27",
  wins:"ניצחונות",draws:"תיקו",losses:"הפסדים",gf:"שערי זכות",ga:"שערי חובה",pts:"נקודות",
- statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך 30`,
+ statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך ${FIX.length}`,
  sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",annH:"📢 הודעות מהקבוצה",annOld:n=>`הודעות קודמות (${n})`,annPushT:"📢 הודעה מצעירי טירה",trainH:"🗓️ אימונים",trainNext:"האימון הבא",trainNone:"עוד לא נקבעו אימונים קבועים",cancelled:"בוטל",trOffT:"❌ האימון בוטל",trOnT:"✅ האימון מתקיים כרגיל",prefsH:"🔔 אילו התראות לקבל?",p_all:"הכול (כולל כל גול)",p_res:"תוצאות, תזכורות והודעות",p_ann:"רק הודעות מהקבוצה",p_off:"בלי התראות",netOff:"📶 אין חיבור – מוצגים הנתונים האחרונים",h2h:"מפגשים קודמים",tableBtn:"📊 טבלת הליגה",addCal:"📅 הוסף ליומן",icsAll:"📅 כל משחקי העונה ליומן",photos:"תמונות מהמשחק",photo:"תמונה",galErr:"לא ניתן לטעון תמונות",installBtn:"📲 הוסיפו את האתר למסך הבית",instIOS:"בספארי: לחצו על כפתור השיתוף ⬆️ ואז על „הוספה למסך הבית”",instSam:"בדפדפן סמסונג: לחצו על התפריט ☰ בתחתית המסך ← „הוסף דף אל” ← „מסך הבית”",instAnd:"בכרום: לחצו על התפריט ⋮ ואז על „הוספה למסך הבית” או „התקנת אפליקציה”",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
- leagueSum:p=>`${p} מתוך 30 שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
+ leagueSum:p=>`${p} מתוך ${FIX.length} שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
  days:["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"],day:d=>`יום ${d}`,
  months:["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
  home:"בית",away:"חוץ",at:"שעה",round:"מחזור",cupRound:"סיבוב",cup:"גביע",league:"ליגה",moved:"מועד עודכן",
@@ -424,9 +436,9 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
  cardFT:"סיום",cardFor:"גולים",lang:"عربي"},
 ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشارون 2 · كأس الأولاد ب׳ · موسم 2026/27",
  wins:"فوز",draws:"تعادل",losses:"خسارة",gf:"أهداف لنا",ga:"أهداف علينا",pts:"نقاط",
- statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من 30`,
+ statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من ${FIX.length}`,
  sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",annH:"📢 رسائل من الفريق",annOld:n=>`رسائل سابقة (${n})`,annPushT:"📢 رسالة من شباب الطيرة",trainH:"🗓️ التدريبات",trainNext:"التدريب القادم",trainNone:"لم تُحدَّد مواعيد التدريب بعد",cancelled:"أُلغي",trOffT:"❌ أُلغي التدريب",trOnT:"✅ التدريب في موعده",prefsH:"🔔 أي إشعارات تريد؟",p_all:"الكل (مع كل هدف)",p_res:"النتائج والتذكيرات والرسائل",p_ann:"رسائل الفريق فقط",p_off:"بدون إشعارات",netOff:"📶 لا يوجد اتصال – تُعرض آخر البيانات",h2h:"مواجهات سابقة",tableBtn:"📊 جدول الدوري",addCal:"📅 أضف إلى التقويم",icsAll:"📅 كل مباريات الموسم إلى التقويم",photos:"صور من المباراة",photo:"صورة",galErr:"تعذّر تحميل الصور",installBtn:"📲 أضيفوا الموقع إلى الشاشة الرئيسية",instIOS:"في سفاري: اضغطوا زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»",instSam:"في متصفح سامسونج: اضغطوا القائمة ☰ في أسفل الشاشة ← «إضافة صفحة إلى» ← «الشاشة الرئيسية»",instAnd:"في كروم: اضغطوا القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
- leagueSum:p=>`لُعبت ${p} من 30`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
+ leagueSum:p=>`لُعبت ${p} من ${FIX.length}`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
  days:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],day:d=>d,
  months:["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"],
  home:"على أرضنا",away:"خارج أرضنا",at:"الساعة",round:"المرحلة",cupRound:"الدور",cup:"الكأس",league:"الدوري",moved:"تغيّر الموعد",
@@ -443,16 +455,18 @@ ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشا�
  pGames:"مباريات بالتشكيلة",pGoals:"أهداف",pCapt:"كابتن",pList:"مبارياته",pNone:"لم تُسجّل مباريات لهذا اللاعب بعد.",close:"إغلاق",
  cardFT:"النتيجة النهائية",cardFor:"الأهداف",lang:"עברית"}
 };
+if(TD&&TD.s)for(const l of ["he","ar"])Object.assign(S[l],TD.s[l]||{});
+const teamLabel=(id,l)=>{const m=(window.TEAMS||{})[id];return m?(m[l||LANG]||m.he):""};
 const t=(k,...a)=>{const v=S[LANG][k]??S.he[k];return typeof v==="function"?v(...a):v};
 const pName=no=>{const p=ROSTER.find(r=>r[0]===no);if(!p)return "";return LANG==="ar"&&AR_NAMES[no]?AR_NAMES[no]:p[1]};
 const oName=o=>LANG==="ar"&&OPP_AR[o]?OPP_AR[o]:o;
-const dispName=n=>{const m=String(n||"").match(/^(.*?)\s*\((\d+)\)\s*$/);if(m&&ROSTER.some(r=>r[0]===+m[2]))return `${pName(+m[2])} (${m[2]})`;return n};
+const dispName=n=>{const m=String(n||"").match(/^(.*?)\s*\((\d+)\)\s*$/);if(m&&ROSTER.some(r=>r[0]===+m[2]))return NUMS?`${pName(+m[2])} (${m[2]})`:pName(+m[2]);return n};
 const noOf=n=>{const m=String(n||"").match(/\((\d+)\)\s*$/);return m?+m[1]:null};
 const DAYS=()=>t("days"),MONTHS=()=>t("months");
 
 let results = {};
 let openKey = null, draft = null, db = null, booted = false, canEdit = false;
-const LS = "tzeirei-tira-2627-v2";
+const LS = "tzeirei-tira-2627-v2"+(TEAM==="kb"?"":"-"+TEAM);
 function lsLoad(){try{return JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){return {}}}
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify(results))}catch(e){}}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -502,7 +516,10 @@ function renderStatic(){
   document.documentElement.lang=LANG;
   document.querySelectorAll("[data-t]").forEach(el=>{el.textContent=t(el.dataset.t)});
   document.getElementById("langBtn").textContent=t("lang");
-  document.title=LANG==="ar"?"شباب الطيرة 2026/27":"צעירי טירה 2026/27";
+  document.title=(LANG==="ar"?"شباب الطيرة":"צעירי טירה")+" · "+teamLabel(TEAM)+" 2026/27";
+  const tp=document.getElementById("teamPick");
+  if(tp)tp.innerHTML=Object.keys(window.TEAMS||{kb:1}).map(id=>`<a href="?t=${id}" data-team="${id}"${id===TEAM?' aria-current="true"':""}>${esc(teamLabel(id)||"ילדים ב׳")}</a>`).join("");
+  if(TD&&TD.table){const tb=document.querySelector('[data-t="tableBtn"]');if(tb)tb.href=TD.table}
 }
 function renderStats(){
   const s=tally(false);
@@ -689,11 +706,11 @@ function writeFailed(e){
 }
 async function writeDoc(k,rec){
   if(!db||!canEdit)return;
-  try{await db.doc("results/"+k).set(rec);results[k]=rec;lsSave()}catch(e){writeFailed(e)}
+  try{await db.doc("results/"+DK(k)).set(rec);results[k]=rec;lsSave()}catch(e){writeFailed(e)}
 }
 async function removeDoc(k){
   if(!db||!canEdit)return;
-  try{await db.doc("results/"+k).delete();delete results[k];lsSave()}catch(e){writeFailed(e)}
+  try{await db.doc("results/"+DK(k)).delete();delete results[k];lsSave()}catch(e){writeFailed(e)}
 }
 
 const onGameClick=async e=>{
@@ -1027,6 +1044,11 @@ if(NATIVE){const ext=u=>{try{const x=new URL(u,location.href);return /^https?:$/
   document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a||!ext(a.href))return;e.preventDefault();e.stopImmediatePropagation();location.href=a.href},true);
   const wo=window.open.bind(window);window.open=(u,...r)=>{if(u&&ext(u)){location.href=new URL(u,location.href).href;return null}return wo(u,...r)}}
 var PUSH_ST=null,pushBusy=false,pushAgain=false;
+/* push topics: ילדים ב׳ keeps "<cat>_<lang>", other teams "<team>_<cat>_<lang>"; a phone can follow several teams */
+const topicOf=(tm,c,l)=>(tm==="kb"?"":tm+"_")+c+"_"+l;
+const follows=()=>{try{const a=JSON.parse(localStorage.getItem("tira-follow")||"null");if(Array.isArray(a))return a.filter(x=>(window.TEAMS||{kb:1})[x])}catch(e){}return [TEAM]};
+try{if(!localStorage.getItem("tira-follow"))localStorage.setItem("tira-follow",JSON.stringify([TEAM]))}catch(e){}
+const SUBBED=(()=>{try{return JSON.parse(localStorage.getItem("tira-subbed")||"{}")}catch(e){return {}}})();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function pushSubscribe(){
   const FM=CP.FirebaseMessaging;if(!FM)return;
@@ -1038,10 +1060,11 @@ async function pushSubscribe(){
     // iOS: topics only work after Apple's APNs token reached Firebase -> wait for an FCM token first
     let tok="",lastErr="";for(let i=0;i<10&&!tok;i++){try{tok=(await FM.getToken()).token||""}catch(e){lastErr=e&&e.message||String(e);await sleep(1500)}}
     if(!tok){PUSH_ST={s:"err",m:"token: "+lastErr};return}
-    const want=new Set((PREF_CATS[pushMode()]||PREF_CATS.all).map(c=>c+"_"+LANG));let bad="";
-    for(const c of ["live","result","remind","ann"])for(const l of ["he","ar"]){const tp=c+"_"+l;
+    const fol=follows(),want=new Set();for(const tm of fol)for(const c of (PREF_CATS[pushMode()]||PREF_CATS.all))want.add(topicOf(tm,c,LANG));let bad="";
+    for(const tm of Object.keys(window.TEAMS||{kb:1}))for(const c of ["live","result","remind","ann"])for(const l of ["he","ar"]){const tp=topicOf(tm,c,l);if(!want.has(tp)&&!fol.includes(tm)&&!(tm in SUBBED))continue;
       for(let k=0;k<3;k++){try{if(want.has(tp))await FM.subscribeToTopic({topic:tp});else await FM.unsubscribeFromTopic({topic:tp});break}catch(e){if(k===2)bad=tp+": "+(e&&e.message||e);else await sleep(1500)}}}
     PUSH_ST=bad?{s:"err",m:bad}:{s:"ok"};
+    if(!bad){const sb={};for(const tm of fol)sb[tm]=1;try{localStorage.setItem("tira-subbed",JSON.stringify(sb))}catch(_){}}
   }catch(e){PUSH_ST={s:"err",m:e&&e.message||String(e)};console.warn("push",e)}
   finally{pushBusy=false;renderPrefs();if(pushAgain){pushAgain=false;setTimeout(pushSubscribe,500)}}
 }
@@ -1065,7 +1088,7 @@ const ghToken=()=>{try{return cleanTok(localStorage.getItem(GH_KEY))}catch(e){re
 function inLang(l,fn){const o=LANG;LANG=l;try{return fn()}finally{LANG=o}}
 async function pushSend(build,cat,snd){
   const tok=ghToken();if(!tok||!canEdit)return false;
-  const payload={cat:cat||"live",he:inLang("he",build),ar:inLang("ar",build)};if(snd)payload.snd=snd;
+  const payload={cat:cat||"live",he:inLang("he",build),ar:inLang("ar",build)};if(snd)payload.snd=snd;if(TEAM!=="kb")payload.team=TEAM;
   try{const w=await fetch("https://tira-push.dib-arkan.workers.dev/",{method:"POST",headers:{Authorization:"Bearer "+tok,"Content-Type":"application/json"},body:JSON.stringify(payload)});
     if(w.ok||w.status===502){document.getElementById("sync").textContent="🔔 ההתראה נשלחה ⚡";return true}}catch(e){}
   try{const r=await fetch("https://api.github.com/repos/dibdrive/tira/actions/workflows/notify.yml/dispatches",{method:"POST",headers:{Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"},body:JSON.stringify({ref:"main",inputs:{payload:JSON.stringify(payload)}})});
@@ -1076,7 +1099,7 @@ function liveNotify(kind,k,ev){
   const g=gameByKey(k);if(!g)return;
   const cat=kind==="ft"?"result":kind==="test"?"ann":"live";
   pushSend(()=>{
-    const x=results[k]||{},sc=`${x.them??0}:${x.us??0}`/* RTL: digits run left-to-right, so "them:us" puts our score next to our name */,team=t("team").replace(/^מ\.כ\.\s*/,""),opp=oName(g.o),ar=LANG==="ar";
+    const x=results[k]||{},sc=`${x.them??0}:${x.us??0}`/* RTL: digits run left-to-right, so "them:us" puts our score next to our name */,team=t("team").replace(/^מ\.כ\.\s*/,"")+" "+teamLabel(TEAM),opp=oName(g.o),ar=LANG==="ar";
     if(kind==="kick")return {title:ar?"🟢 بدأت المباراة!":"🟢 המשחק התחיל!",body:`${team} – ${opp} · ${cardComp(g)}`};
     if(kind==="goal"&&ev&&ev.side==="us")return {title:`${ar?"⚽ هدف!":"⚽ גול!"} ${team} ${sc}`,body:`${ev.no!=null?pName(ev.no)+" ":""}${ev.min}'${ev.ast!=null?` · ${ar?"تمريرة":"בישול"}: ${pName(ev.ast)}`:""} · ${ar?"ضد":"מול"} ${opp}`};
     if(kind==="goal")return {title:`${ar?"هدف لـ":"גול ל"}${opp}`,body:`${team} ${sc} · ${ev?ev.min+"'":""}`};
@@ -1120,7 +1143,7 @@ document.getElementById("annSec").addEventListener("click",async e=>{
     const b=e.target.closest("#annSend");b.disabled=true;b.textContent="שולח…";
     const item={id:Date.now().toString(36),text,ts:Date.now()};
     await writeDoc(ANN_K,{items:[item,...annItems()].slice(0,20)});
-    if(document.getElementById("annPush").checked)pushSend(()=>({title:t("annPushT"),body:text}),"ann");
+    if(document.getElementById("annPush").checked)pushSend(()=>({title:t("annPushT")+" · "+teamLabel(TEAM),body:text}),"ann");
     renderAnn();
   }
 });
@@ -1158,7 +1181,7 @@ document.getElementById("trainSec").addEventListener("click",async e=>{
     for(const ck of Object.keys(c))if(ck.slice(0,10)<iso(today()))delete c[ck];
     await writeDoc(TR_K,{slots:tr.slots||[],cancel:c});renderTrain();
     const it=upcomingTrainings(12).find(u=>u.key===k);
-    if(it&&wantPush)pushSend(()=>({title:was?t("trOnT"):t("trOffT"),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
+    if(it&&wantPush)pushSend(()=>({title:(was?t("trOnT"):t("trOffT"))+" · "+teamLabel(TEAM),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
   }
 });
 // --- notification preferences (app only) ---
@@ -1170,9 +1193,10 @@ function renderPrefs(){
   sec.hidden=false;const m=pushMode();
   const st=PUSH_ST,ar=LANG==="ar";
   const stTxt=!st?(ar?"⏳ جارٍ تفعيل الإشعارات…":"⏳ מפעיל התראות…"):st.s==="ok"?(ar?"✅ الإشعارات مفعّلة على هذا الهاتف":"✅ ההתראות פעילות בטלפון הזה"):st.s==="denied"?(ar?"🚫 الإشعارات مرفوضة – فعّلها في إعدادات الهاتف ← الإشعارات":"🚫 ההתראות חסומות – יש לאפשר בהגדרות הטלפון ← התראות"):(ar?"⚠️ تعذّر التفعيل":"⚠️ ההתראות לא הופעלו")+` <small dir="ltr">(${esc(String(st.m||"").slice(0,120))})</small>`;
-  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div><p class="hint" style="margin:8px 0 0">${stTxt}${st&&st.s!=="ok"?` <button class="lnk" data-pref-retry type="button">${ar?"إعادة المحاولة":"נסה שוב"}</button>`:""}</p>`;
+  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div>${Object.keys(window.TEAMS||{}).length>1?`<div class="slabel">${ar?"إشعارات للفرق:":"התראות עבור הקבוצות:"}</div><div class="tfollow">${Object.keys(window.TEAMS).map(id=>`<button class="pchip" data-follow="${id}" aria-pressed="${follows().includes(id)}" type="button">${esc(teamLabel(id))}</button>`).join("")}</div>`:""}<p class="hint" style="margin:8px 0 0">${stTxt}${st&&st.s!=="ok"?` <button class="lnk" data-pref-retry type="button">${ar?"إعادة المحاولة":"נסה שוב"}</button>`:""}</p>`;
 }
-document.getElementById("prefSec").addEventListener("click",e=>{if(e.target.closest("[data-pref-retry]")){PUSH_ST=null;renderPrefs();pushSubscribe();return}const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
+document.getElementById("prefSec").addEventListener("click",e=>{if(e.target.closest("[data-pref-retry]")){PUSH_ST=null;renderPrefs();pushSubscribe();return}
+  const f=e.target.closest("[data-follow]");if(f){const id=f.dataset.follow,cur=follows(),nx=cur.includes(id)?cur.filter(x=>x!==id):[...cur,id];try{localStorage.setItem("tira-follow",JSON.stringify(nx))}catch(_){}renderPrefs();pushSubscribe();return}const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
 // --- offline banner + caching ---
 var NET_CACHE=null;
 function renderNet(){const b=document.getElementById("netBar");if(b)b.hidden=!(navigator.onLine===false&&NET_CACHE!==false)}
@@ -1242,7 +1266,7 @@ showInstall();
 
 // ===== Photo gallery =====
 const galCache={};
-async function loadGal(k){if(galCache[k])return galCache[k];if(!db)return [];const s=await db.collection("photos").where("game","==",k).get();const arr=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ts||0)-(b.ts||0));galCache[k]=arr;return arr}
+async function loadGal(k){if(galCache[k])return galCache[k];if(!db)return [];const s=await db.collection("photos").where("game","==",DK(k)).get();const arr=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ts||0)-(b.ts||0));galCache[k]=arr;return arr}
 function galSlot(k,admin){const n=(results[k]||{}).photoCount||0;if(!n&&!admin)return "";return `<div class="gal" data-gal="${k}"${admin?' data-admin="1"':""}><div class="slabel">📷 ${t("photos")}${n?` · ${n}`:""}</div><div class="gthumbs">${n?`<span class="hint">${t("loading")}</span>`:""}</div>${admin?`<label class="btn sm gup">＋ הוסף תמונות<input type="file" accept="image/*" multiple hidden data-gup="${k}"></label> <span class="hint gst"></span>`:""}</div>`}
 async function fillGals(){
   for(const el of document.querySelectorAll(".gal[data-gal]")){
@@ -1254,7 +1278,7 @@ async function fillGals(){
 }
 function resizeTo(img,max,q){const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.naturalWidth*s));c.height=Math.max(1,Math.round(img.naturalHeight*s));c.getContext("2d").drawImage(img,0,0,c.width,c.height);return c.toDataURL("image/jpeg",q)}
 function fileImg(f){return new Promise((r,j)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{r(i);setTimeout(()=>URL.revokeObjectURL(u),2000)};i.onerror=()=>j(new Error("bad image"));i.src=u})}
-async function setPhotoCount(k,n){const patch={photoCount:n};if(!results[k]&&k[0]==="r")patch.round=+k.slice(1);await db.doc("results/"+k).set(patch,{merge:true});results[k]={...(results[k]||{}),...patch}}
+async function setPhotoCount(k,n){const patch={photoCount:n};if(!results[k]&&k[0]==="r")patch.round=+k.slice(1);await db.doc("results/"+DK(k)).set(patch,{merge:true});results[k]={...(results[k]||{}),...patch}}
 async function uploadPhotos(k,files,st){
   if(!db||!canEdit)return;let done=0,err="";
   for(const f of files){
@@ -1263,8 +1287,8 @@ async function uploadPhotos(k,files,st){
       const img=await fileImg(f);let mx=1600,q=.8,full=resizeTo(img,mx,q);
       while(full.length>900000){q-=.1;if(q<.45){mx=Math.round(mx*.8);q=.75}full=resizeTo(img,mx,q)}
       const thumb=resizeTo(img,360,.7),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-      await db.doc("photoFull/"+id).set({game:k,data:full});
-      await db.doc("photos/"+id).set({game:k,thumb,ts:Date.now()});
+      await db.doc("photoFull/"+id).set({game:DK(k),data:full});
+      await db.doc("photos/"+id).set({game:DK(k),thumb,ts:Date.now()});
       done++;
     }catch(e){err=e.code||e.message||"";console.error(e)}
   }
@@ -1323,7 +1347,8 @@ try{
   db.collection("results").onSnapshot({includeMetadataChanges:true},snap=>{
     NET_CACHE=!!(snap.metadata&&snap.metadata.fromCache);renderNet();
     const next={};
-    snap.docs.forEach(d=>{const v=d.data();if(v)next[d.id]=v});
+    const pre=TEAM+"__";
+    snap.docs.forEach(d=>{const v=d.data();if(!v)return;if(TEAM==="kb"){if(!d.id.includes("__"))next[d.id]=v}else if(d.id.startsWith(pre))next[d.id.slice(pre.length)]=v});
     booted=true;
     results=next;lsSave();
     renderRoster();renderStats();renderScorers();if(openKey==null)renderGames();renderLive();if(!document.activeElement||!document.activeElement.closest("#annSec,#trainSec"))renderExtras();
