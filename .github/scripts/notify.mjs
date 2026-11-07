@@ -58,7 +58,8 @@ async function eventMode() {
   const p = JSON.parse(process.env.PAYLOAD || "{}");
   const cat = ["live", "result", "remind", "ann"].includes(p.cat) ? p.cat : "live";
   const snd = ["goal_us", "goal_them", "whistle"].includes(p.snd) ? p.snd : undefined;
-  await send(["he", "ar"].map(l => p[l] && { topic: topic(cat, l), title: String(p[l].title || ""), body: String(p[l].body || ""), snd, ttl: TTL[cat] }));
+  const team = /^[a-z][a-z0-9]{0,9}$/.test(p.team || "") && p.team !== "kb" ? p.team + "_" : "";
+  await send(["he", "ar"].map(l => p[l] && { topic: team + topic(cat, l), title: String(p[l].title || ""), body: String(p[l].body || ""), snd, ttl: TTL[cat] }));
 }
 
 // ---------- reminder mode ----------
