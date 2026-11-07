@@ -43,6 +43,7 @@ async function send(msgs) {
       method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
       body: JSON.stringify({ message: {
         topic: m.topic,
+        data: { team: (/^([a-z][a-z0-9]{0,9})_(live|result|remind|ann)_/.exec(m.topic) || [])[1] || "kb" },
         notification: { title: m.title.slice(0, 120), body: (m.body || "").slice(0, 300) },
         android: { priority: "high", ttl: (m.ttl || 86400) + "s", notification: { sound: m.snd || "default", channel_id: SND_CH[m.snd] || "tira" } },
         apns: { headers: { "apns-expiration": String(Math.floor(Date.now() / 1000) + (m.ttl || 86400)) }, payload: { aps: { sound: m.snd ? m.snd + ".wav" : "default" } } },
