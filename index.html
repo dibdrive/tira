@@ -1070,6 +1070,8 @@ async function pushSubscribe(){
 }
 if(NATIVE&&CP.FirebaseMessaging){try{CP.FirebaseMessaging.addListener("apnsTokenReceived",()=>setTimeout(pushSubscribe,300))}catch(e){}
   let lastPS=Date.now();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(PUSH_ST?.s!=="ok"||Date.now()-lastPS>6*3600e3)){lastPS=Date.now();pushSubscribe()}})}
+/* tapping a notification opens the team it belongs to (message data.team, set by the push worker) */
+if(NATIVE&&CP.FirebaseMessaging){try{CP.FirebaseMessaging.addListener("notificationActionPerformed",ev=>{const tm=ev&&ev.notification&&ev.notification.data&&ev.notification.data.team;if(tm&&tm!==TEAM&&(window.TEAMS||{})[tm])location.href="?t="+encodeURIComponent(tm)})}catch(e){}}
 if(NATIVE){pushSubscribe();document.getElementById("langBtn").addEventListener("click",()=>setTimeout(pushSubscribe,0))}
 async function shareFile(blob,file,txt){
   if(NATIVE&&CP.Filesystem&&CP.Share){
