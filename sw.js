@@ -13,6 +13,11 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match("/tira/")));
     return;
   }
+  if (u.origin === location.origin && /\/teams\.js$/.test(u.pathname)) {
+    e.respondWith(fetch(req).then(r => { if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(req.url.split("?")[0], cp)); } return r; })
+      .catch(() => caches.match(req.url.split("?")[0])));
+    return;
+  }
   const staticHost = /^(www\.gstatic\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|www\.football\.org\.il)$/.test(u.hostname);
   const staticLocal = u.origin === location.origin && /\.(png|webmanifest)$/.test(u.pathname);
   if (staticHost || staticLocal) {
