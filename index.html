@@ -306,6 +306,8 @@ header.hero::before,header.hero::after{pointer-events:none}
 .teampick{position:relative;z-index:1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-inline-end:70px}
 .teampick::-webkit-scrollbar{display:none}
 .teampick[hidden]{display:none}
+.slabel.sub{font-size:12px;opacity:.8;margin-top:6px}
+.ltl li.xev .xout{opacity:.7}
 .teampick a{flex:none;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.35);white-space:nowrap}
 .teampick a[aria-current="true"]{background:#fff;color:var(--pitch)}
 html.nonums .pl .no,html.nonums .pchip b,html.nonums .pnb,html.nonums .pno{display:none}
@@ -388,6 +390,7 @@ const T = "מ.כ. צעירי טירה";
 const SHOWN=Object.keys(window.TEAMS||{kb:1}).filter(id=>!(window.TEAMS||{})[id]||!window.TEAMS[id].hidden);
 const TEAM=(window.TEAMS&&window.TEAMS[window.TEAM]&&(!window.TEAMS[window.TEAM].hidden||/[?&]t=/.test(location.search)))?window.TEAM:"kb",TD=TEAM==="kb"?null:window.TEAMS[TEAM],NUMS=!TD||TD.nums!==false;
 if(!NUMS)document.documentElement.classList.add("nonums");
+const EXT=!!(TD&&TD.ext); /* team keeps cards + substitutions (teams.js "ext":true) */
 const DK=k=>TEAM==="kb"?k:TEAM+"__"+k; /* Firestore doc id: ילדים ב׳ keeps plain ids, other teams are prefixed */
 const FIX = (TD?TD.fix:[
  [1,"18/10/26","שמשון בני טייבה",1,"19:30","14/10/26"],[2,"28/10/26","איחוד בני בקה",0,"","17/10/26"],
@@ -431,7 +434,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
  scorersL:"מבקיעים",flow:"מהלך המשחק",player:"שחקן",total:"סה״כ",noScorers:"אחרי שיוזנו מבקיעים, הטבלה תתמלא כאן.",assistsH:"מלך הבישולים",noAssists:"אחרי שיוזנו בישולים, הטבלה תתמלא כאן.",pAssists:"בישולים",astBy:"בישול",
  gk:"שוער",apps:n=>`המספר בצד = במכמה משחקים השחקן היה בסגל, מתוך ${n} משחקים שבהם נרשם סגל`,tapPlayer:"לחצו על שחקן כדי לראות את הנתונים שלו",
  liveOn:"● משחק חי",ft:"סיום",h1:"מחצית ראשונה",h2:"מחצית שנייה",added:" · תוספת זמן",brk:"הפסקה · עד המחצית השנייה",brkOver:"הפסקה הסתיימה",ended:"המשחק הסתיים",
- unknownScorer:"מבקיע לא ידוע",goalFor:o=>`גול ל${o}`,noGoals:"עוד אין שערים במשחק.",
+ unknownScorer:"מבקיע לא ידוע",xi:"הרכב פותח",subsIn:"נכנסו מהספסל",yc:"כרטיס צהוב",rc:"כרטיס אדום",subT:"חילוף",pYellow:"צהובים",pRed:"אדומים",goalFor:o=>`גול ל${o}`,noGoals:"עוד אין שערים במשחק.",
  share:"📤 שתף תוצאה",shareNext:"📤 שתף משחק",cheer:"כולם מוזמנים לעודד! 💙",sharing:"מכין תמונה…",
  waze:"ניווט בוויז",wazeTown:tw=>`ניווט ל${tw}`,venue:"מגרש",
  login:"כניסת מנהל",logout:"יציאה",editMode:"מצב עריכה ✓",notAllowed:"החשבון הזה לא מורשה לערוך",loading:"טוען…",offline:"אין חיבור לשרת. מציג נתונים שמורים",
@@ -451,7 +454,7 @@ ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشا�
  scorersL:"الهدّافون",flow:"مجريات المباراة",player:"اللاعب",total:"المجموع",noScorers:"بعد تسجيل الأهداف ستظهر القائمة هنا.",assistsH:"ملك التمريرات الحاسمة",noAssists:"بعد تسجيل التمريرات الحاسمة ستظهر القائمة هنا.",pAssists:"تمريرات حاسمة",astBy:"تمريرة",
  gk:"حارس",apps:n=>`الرقم بجانب اللاعب = عدد المباريات التي كان فيها بالتشكيلة، من أصل ${n}`,tapPlayer:"اضغطوا على لاعب لرؤية معلوماته",
  liveOn:"● بث مباشر",ft:"انتهت",h1:"الشوط الأول",h2:"الشوط الثاني",added:" · وقت بدل ضائع",brk:"استراحة · حتى الشوط الثاني",brkOver:"انتهت الاستراحة",ended:"انتهت المباراة",
- unknownScorer:"هدّاف غير معروف",goalFor:o=>`هدف لـ${o}`,noGoals:"لا أهداف بعد.",
+ unknownScorer:"هدّاف غير معروف",xi:"التشكيلة الأساسية",subsIn:"دخلوا من الدكة",yc:"بطاقة صفراء",rc:"بطاقة حمراء",subT:"تبديل",pYellow:"صفراء",pRed:"حمراء",goalFor:o=>`هدف لـ${o}`,noGoals:"لا أهداف بعد.",
  share:"📤 مشاركة النتيجة",shareNext:"📤 مشاركة المباراة",cheer:"الجميع مدعوون للتشجيع! 💙",sharing:"جاري تحضير الصورة…",
  waze:"اتجاهات Waze",wazeTown:tw=>`اتجاهات إلى ${tw}`,venue:"الملعب",
  login:"دخول المسؤول",logout:"خروج",editMode:"وضع التعديل ✓",notAllowed:"هذا الحساب غير مخوّل بالتعديل",loading:"جاري التحميل…",offline:"لا اتصال بالخادم. تظهر بيانات محفوظة",
@@ -625,7 +628,12 @@ function lineupChips(x){
   ev.filter(e=>e.side==="us"&&e.no!=null).forEach(e=>goalsByNo[e.no]=(goalsByNo[e.no]||0)+1);
   if(!ev.length)(x.scorers||[]).forEach(s=>{const no=noOf(s.name);if(no!=null)goalsByNo[no]=(goalsByNo[no]||0)+(s.goals||0)});
   const sq=(x.squad||[]).map(n=>ROSTER.find(p=>p[0]===n)).filter(Boolean);
-  return {sq,html:`<div class="chips">${sq.map(p=>`<button class="pchip" data-player="${p[0]}" aria-pressed="true"><b>${p[0]}</b>${esc(pName(p[0]))}${x.captain===p[0]?" Ⓒ":""}${goalsByNo[p[0]]?` <span class="gl">${"⚽".repeat(goalsByNo[p[0]])}</span>`:""}</button>`).join("")}</div>`};
+  const cardsBy={};xevs(x).filter(e=>e.t!=="sub").forEach(e=>cardsBy[e.no]=(cardsBy[e.no]||"")+(e.t==="r"?"🟥":"🟨"));
+  const chip=p=>`<button class="pchip" data-player="${p[0]}" aria-pressed="true"><b>${p[0]}</b>${esc(pName(p[0]))}${x.captain===p[0]?" Ⓒ":""}${goalsByNo[p[0]]?` <span class="gl">${"⚽".repeat(goalsByNo[p[0]])}</span>`:""}${cardsBy[p[0]]?` <span class="gl">${cardsBy[p[0]]}</span>`:""}</button>`;
+  const xi=EXT&&(x.xi||[]).length?x.xi:null;
+  if(xi){const a=sq.filter(p=>xi.includes(p[0])),b=sq.filter(p=>!xi.includes(p[0]));
+    return {sq,html:`<div class="slabel sub">${t("xi")}</div><div class="chips">${a.map(chip).join("")}</div>${b.length?`<div class="slabel sub">${t("subsIn")}</div><div class="chips">${b.map(chip).join("")}</div>`:""}`}}
+  return {sq,html:`<div class="chips">${sq.map(chip).join("")}</div>`};
 }
 function viewCard(g){
   const x=results[g.key];const vl=venueLink(g);
@@ -636,7 +644,7 @@ function viewCard(g){
   const lc=lineupChips(x);
   if(lc.sq.length)parts.push(`<div class="slabel">${t("squadN",lc.sq.length)}</div>${lc.html}`);
   const sc=(x.scorers||[]).filter(s=>s.name&&s.goals>0);
-  if((x.events||[]).length)parts.push(`<div class="slabel">${t("flow")}</div>${timeline(x,g,false)}`);
+  if((x.events||[]).length||xevs(x).length)parts.push(`<div class="slabel">${t("flow")}</div>${timeline(x,g,false)}`);
   else if(sc.length)parts.push(`<div class="slabel">${t("scorersL")}</div><div class="vsc">${sc.map(s=>`⚽ ${esc(dispName(s.name))}${s.goals>1?` ×${s.goals}`:""}`).join("<br>")}</div>`);
   if(!o)parts.push(h2hHtml(g));
   parts.push(galSlot(g.key,false));
@@ -784,7 +792,7 @@ document.getElementById("langBtn").addEventListener("click",()=>{LANG=LANG==="ar
 const pdlg=document.getElementById("pdlg");
 function openPlayer(no){
   const p=ROSTER.find(r=>r[0]===no);if(!p)return;
-  const games=allGames();let inSq=0,capt=0,gl=0,gc=0,pa=0;const rows=[];
+  const games=allGames();let inSq=0,capt=0,gl=0,gc=0,pa=0,yc=0,rc=0;const rows=[];
   for(const g of games){
     const x=results[g.key];if(!x)continue;
     const inS=(x.squad||[]).includes(no);
@@ -792,15 +800,16 @@ function openPlayer(no){
     let goals=ev.length;if(!ev.length&&!(x.events||[]).length)(x.scorers||[]).forEach(s=>{if(noOf(s.name)===no)goals+=s.goals||0});
     const evA=sortedEvents(x).filter(e=>e.side==="us"&&e.ast===no);
     let asts=0;(x.assists||[]).forEach(s=>{if(noOf(s.name)===no)asts+=s.n||0});
-    if(!inS&&!goals&&!asts)continue;pa+=asts;
+    const cds=xevs(x).filter(e=>e.t!=="sub"&&e.no===no);
+    if(!inS&&!goals&&!asts)continue;pa+=asts;cds.forEach(e=>e.t==="r"?rc++:yc++);
     if(inS)inSq++;if(x.captain===no)capt++;if(g.comp==="cup")gc+=goals;else gl+=goals;
     const o=outcome(x);
-    rows.push(`<li><span class="pd">${fmt(g.date)}</span><span class="po">${esc(oName(g.o))}<small>${compLabel(g)}</small></span><span class="pr">${o&&!inPlay(x)?scoreHtml(g,x)+resChip(o):""}${x.captain===no?" Ⓒ":""}${goals?` <span class="gl">${"⚽".repeat(goals)}</span>${ev.length?` <bdi dir=ltr class="pm">${ev.map(e=>minLabel(e.h,e.min)).join(", ")}</bdi>`:""}`:""}${asts?` <span class="gl" title="${t("pAssists")}">${"🅰️".repeat(asts)}</span>${evA.length?` <bdi dir=ltr class="pm">${evA.map(e=>minLabel(e.h,e.min)).join(", ")}</bdi>`:""}`:""}</span></li>`);
+    rows.push(`<li><span class="pd">${fmt(g.date)}</span><span class="po">${esc(oName(g.o))}<small>${compLabel(g)}</small></span><span class="pr">${o&&!inPlay(x)?scoreHtml(g,x)+resChip(o):""}${x.captain===no?" Ⓒ":""}${cds.length?` <span class="gl">${cds.map(e=>e.t==="r"?"🟥":"🟨").join("")}</span>`:""}${goals?` <span class="gl">${"⚽".repeat(goals)}</span>${ev.length?` <bdi dir=ltr class="pm">${ev.map(e=>minLabel(e.h,e.min)).join(", ")}</bdi>`:""}`:""}${asts?` <span class="gl" title="${t("pAssists")}">${"🅰️".repeat(asts)}</span>${evA.length?` <bdi dir=ltr class="pm">${evA.map(e=>minLabel(e.h,e.min)).join(", ")}</bdi>`:""}`:""}</span></li>`);
   }
   pdlg.dataset.no=no;
   pdlg.innerHTML=`<div class="pcard">
     <div class="phead">${photo(no)?`<span class="pph"><img src="${photo(no)}" alt="" referrerpolicy="no-referrer"><span class="pnb">${no}</span></span>`:`<span class="pno">${no}</span>`}<div><h3>${esc(pName(no))}</h3>${p[2]?`<span class="prole">${t("gk")}</span>`:""}</div><button class="x" id="pclose" aria-label="${t("close")}">×</button></div>
-    <div class="pstats"><div><b>${inSq}</b><span>${t("pGames")}</span></div><div><b>${gl+gc}</b><span>${t("pGoals")}${gc?` (${t("league")} ${gl} · ${t("cup")} ${gc})`:""}</span></div><div><b>${pa}</b><span>${t("pAssists")}</span></div><div><b>${capt}</b><span>${t("pCapt")}</span></div></div>
+    <div class="pstats"><div><b>${inSq}</b><span>${t("pGames")}</span></div><div><b>${gl+gc}</b><span>${t("pGoals")}${gc?` (${t("league")} ${gl} · ${t("cup")} ${gc})`:""}</span></div><div><b>${pa}</b><span>${t("pAssists")}</span></div><div><b>${capt}</b><span>${t("pCapt")}</span></div>${EXT?`<div><b>${yc}</b><span>🟨 ${t("pYellow")}</span></div><div><b>${rc}</b><span>🟥 ${t("pRed")}</span></div>`:""}</div>
     <div class="slabel">${t("pList")}</div>
     ${rows.length?`<ol class="plist">${rows.join("")}</ol>`:`<p class="empty">${t("pNone")}</p>`}
   </div>`;
@@ -896,7 +905,7 @@ async function shareNext(k,btn){
 const HALF=40, BREAK=10;
 const isLive=x=>!!(x&&x.live&&["pre","1H","HT","2H"].includes(x.live.st));
 const inPlay=x=>!!(x&&x.live&&["1H","HT","2H"].includes(x.live.st));
-let livePick=null, wakeLock=null;
+let livePick=null, xPick=null, wakeLock=null;
 function featuredGame(){
   const games=allGames(),tdy=today();
   const lv=games.find(g=>inPlay(results[g.key]))||games.find(g=>isLive(results[g.key]));if(lv)return lv;
@@ -927,11 +936,18 @@ function derive(events){
   return {us,them,scorers:Object.entries(m).map(([name,goals])=>({name,goals})),assists:Object.entries(a).map(([name,n])=>({name,n}))};
 }
 const sortedEvents=x=>[...((x&&x.events)||[])].sort((a,b)=>(a.h-b.h)||(a.min-b.min)||((a.ts||0)-(b.ts||0)));
+const xevs=x=>EXT?((x&&x.xev)||[]):[];
+function xevRow(e,withDel){
+  const who=no=>esc(pName(no)||String(no??"?"));
+  const txt=e.t==="sub"?`🔄 <span class="xin">⬆ ${who(e.in)}</span> <span class="xout">⬇ ${who(e.out)}</span>`:`${e.t==="r"?"🟥":"🟨"} ${who(e.no)}`;
+  return `<li class="us xev"><span class="lmin" dir="ltr">${minLabel(e.h,e.min)}</span><span class="lwho">${txt}</span>${withDel?`<button class="x" data-xdel="${e.id}" aria-label="מחק">×</button>`:""}</li>`;
+}
 function timeline(x,g,withDel){
-  const ev=sortedEvents(x);if(!ev.length)return "";
+  const ev=[...sortedEvents(x),...xevs(x).map(e=>({...e,_x:1}))].sort((a,b)=>(a.h-b.h)||(a.min-b.min)||((a.ts||0)-(b.ts||0)));if(!ev.length)return "";
   let prevH=1,out="";
   for(const e of ev){
     if(e.h===2&&prevH===1)out+=`<li class="sep">${t("h2")}</li>`;prevH=e.h;
+    if(e._x){out+=xevRow(e,withDel);continue}
     out+=`<li class="${e.side}"><span class="lmin" dir="ltr">${minLabel(e.h,e.min)}</span><span class="lwho">⚽ ${e.side==="us"?esc(dispName(e.name)||t("unknownScorer"))+(e.astName?` <small class="ast">· ${t("astBy")}: ${esc(dispName(e.astName))}</small>`:""):esc(t("goalFor",oName(g.o)))}</span>${withDel?`<button class="x" data-evdel="${e.id}" aria-label="מחק את השער">×</button>`:""}</li>`;
   }
   return `<ol class="ltl">${out}</ol>`;
@@ -975,11 +991,17 @@ function renderLive(){
     const B=(id,txt,cls="")=>`<button class="btn ${cls}" data-lv="${id}">${txt}</button>`;
     let bs=[];
     if(!st||st==="pre")bs=[B("kick","▶ שריקת פתיחה","primary"),B("edit","ערוך הרכב ופרטים")].concat(st==="pre"?[B("unlive","בטל מצב חי","ghost")]:[]);
-    else if(st==="1H")bs=[B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),B("ht","⏸ סיום מחצית ראשונה"),B("undo","↶ בטל","ghost")];
-    else if(st==="HT")bs=[B("k2","▶ פתיחת מחצית שנייה","primary"),B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),B("undo","↶ בטל","ghost")];
-    else if(st==="2H")bs=[B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),B("ft","⏹ שריקת סיום","stop"),B("undo","↶ בטל","ghost")];
+    const XB=EXT?[B("xy","🟨 צהוב"),B("xr","🟥 אדום"),B("xs","🔄 חילוף")]:[];
+    if(st==="1H")bs=[B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),...XB,B("ht","⏸ סיום מחצית ראשונה"),B("undo","↶ בטל","ghost")];
+    else if(st==="HT")bs=[B("k2","▶ פתיחת מחצית שנייה","primary"),B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),...XB,B("undo","↶ בטל","ghost")];
+    else if(st==="2H")bs=[B("gus","⚽ גול שלנו","goal"),B("gthem","גול ליריבה"),...XB,B("ft","⏹ שריקת סיום","stop"),B("undo","↶ בטל","ghost")];
     else if(st==="FT")bs=[B("undo","↶ בטל סיום","ghost"),B("edit","ערוך פרטים","ghost")];
     ctrl=`<div class="lctrl">${bs.join("")}</div>`;
+    if(xPick&&xPick.key===g.key){
+      const pool=lc.sq.length?lc.sq:ROSTER,ch=(attr,sel,list)=>`<div class="chips">${list.map(p=>`<button class="pchip" data-${attr}="${p[0]}" aria-pressed="${sel===p[0]}"><b>${p[0]}</b>${esc(p[1])}</button>`).join("")}</div>`;
+      const who=xPick.t==="sub"?`<div class="slabel">⬇ מי יצא?</div>${ch("xo",xPick.out,pool)}<div class="slabel">⬆ מי נכנס?</div>${ch("xi",xPick.in,ROSTER.filter(p=>p[0]!==xPick.out))}`:`<div class="slabel">${xPick.t==="r"?"🟥 מי קיבל אדום?":"🟨 מי קיבל צהוב?"}</div>${ch("xn",xPick.no,pool)}`;
+      ctrl+=`<div class="lpick">${who}<label class="slabel lminrow" for="xmin">דקה<input id="xmin" class="txt" type="number" inputmode="numeric" min="1" max="120" value="${xPick.min}"></label><label class="slabel caprow" for="xpush"><span>שלח התראה להורים</span><input type="checkbox" id="xpush"${xPick.push?" checked":""}></label><div class="hint" id="xhint"></div><div class="actions"><button class="btn primary" data-lv="xsave">רשום</button><button class="btn ghost" data-lv="xcancel">ביטול</button></div></div>`;
+    }
     if(livePick&&livePick.key===g.key){
       const sq=lc.sq;
       const pool=sq.length?sq:ROSTER;
@@ -998,7 +1020,14 @@ document.getElementById("live").addEventListener("click",async e=>{
   if(pk&&livePick){const mn=document.getElementById("lmin");if(mn)livePick.min=mn.value;livePick.no=+pk.dataset.pk;if(livePick.ast===livePick.no)livePick.ast=null;renderLive();return}
   const ak=e.target.closest("[data-ak]");
   if(ak&&livePick){livePick.ast=ak.dataset.ak===""?null:+ak.dataset.ak;document.querySelectorAll("#live [data-ak]").forEach(c=>c.setAttribute("aria-pressed",String(c===ak)));return}
+  const xc=e.target.closest("[data-xn],[data-xo],[data-xi]");
+  if(xc&&xPick){const mn=document.getElementById("xmin");if(mn)xPick.min=mn.value;const pu=document.getElementById("xpush");if(pu)xPick.push=pu.checked;
+    if(xc.dataset.xn!=null)xPick.no=+xc.dataset.xn;if(xc.dataset.xo!=null){xPick.out=+xc.dataset.xo;if(xPick.in===xPick.out)xPick.in=null}if(xc.dataset.xi!=null)xPick.in=+xc.dataset.xi;renderLive();return}
   const pl=e.target.closest("[data-player]");if(pl){openPlayer(+pl.dataset.player);return}
+  const xdel=e.target.closest("[data-xdel]");
+  if(xdel){const g0=featuredGame();if(!g0||!canEdit)return;const x0=results[g0.key]||{};
+    if(xdel.dataset.armed!=="1"){xdel.dataset.armed="1";xdel.textContent="מחק?";return}
+    await patchGame(g0.key,{xev:(x0.xev||[]).filter(ev=>ev.id!==xdel.dataset.xdel)});return}
   const del=e.target.closest("[data-evdel]");
   const g=featuredGame();if(!g||!canEdit)return;
   const k=g.key,x=results[k]||{},L=x.live||{},now=Date.now();
@@ -1018,8 +1047,21 @@ document.getElementById("live").addEventListener("click",async e=>{
     const nl={...L,st:back};if(back==="pre"){delete nl.t1}if(back==="1H")delete nl.e1;if(back==="HT")delete nl.t2;if(back==="2H")delete nl.e2;
     const p={live:nl};if(back==="pre"&&!(x.events||[]).length){p.us=null;p.them=null}
     await patchGame(k,p);return}
-  if(a==="gus"||a==="gthem"){const m=liveMinute(L);livePick={key:k,side:a==="gus"?"us":"them",no:null,ast:null,min:m.min,h:m.h};renderLive();return}
+  if(a==="gus"||a==="gthem"){const m=liveMinute(L);xPick=null;livePick={key:k,side:a==="gus"?"us":"them",no:null,ast:null,min:m.min,h:m.h};renderLive();return}
   if(a==="lcancel"){livePick=null;renderLive();return}
+  if(a==="xy"||a==="xr"||a==="xs"){const m=liveMinute(L);livePick=null;xPick={key:k,t:a==="xs"?"sub":a==="xr"?"r":"y",no:null,out:null,in:null,min:m.min,push:a!=="xs"};renderLive();return}
+  if(a==="xcancel"){xPick=null;renderLive();return}
+  if(a==="xsave"&&xPick){
+    const min=parseInt(document.getElementById("xmin").value,10),push=document.getElementById("xpush").checked,hint=document.getElementById("xhint");
+    if(!(min>=1&&min<=120)){hint.textContent="צריך דקה בין 1 ל-120";return}
+    if(xPick.t==="sub"&&(xPick.out==null||xPick.in==null)){hint.textContent="בחר מי יצא ומי נכנס";return}
+    if(xPick.t!=="sub"&&xPick.no==null){hint.textContent="בחר שחקן";return}
+    const h=L.st==="2H"||L.st==="FT"?2:1;
+    const ev={id:now.toString(36)+Math.random().toString(36).slice(2,5),t:xPick.t,min,h,ts:now};
+    if(xPick.t==="sub"){ev.out=xPick.out;ev.in=xPick.in}else ev.no=xPick.no;
+    const patch={xev:[...(x.xev||[]),ev]};
+    if(ev.t==="sub"&&!(x.squad||[]).includes(ev.in))patch.squad=[...(x.squad||[]),ev.in].sort((a,b)=>a-b);
+    xPick=null;await patchGame(k,patch);if(push)liveNotify("xev",k,ev);return}
   if(a==="lsave"&&livePick){
     const min=parseInt(document.getElementById("lmin").value,10);
     if(!(min>=1&&min<=120)){document.getElementById("lhint").textContent="צריך דקה בין 1 ל-120";return}
@@ -1112,6 +1154,8 @@ function liveNotify(kind,k,ev){
     if(kind==="k2")return {title:ar?"▶️ بدأ الشوط الثاني":"▶️ המחצית השנייה התחילה",body:`${team} ${sc} ${opp} · ${cardComp(g)}`};
     if(kind==="ht")return {title:`${ar?"⏸ استراحة":"⏸ מחצית"}: ${team} ${sc} ${opp}`,body:cardComp(g)};
     if(kind==="ft"){const o=outcome(x);return {title:`${ar?"🏁 النهاية":"🏁 סיום"}: ${team} ${sc} ${opp}`,body:`${o?t(o)+(o==="W"?"! 💙":""):""} · ${cardComp(g)}`}}
+    if(kind==="xev"&&ev){if(ev.t==="sub")return {title:`🔄 ${ar?"تبديل":"חילוף"} ${ev.min}' · ${team}`,body:`⬆ ${pName(ev.in)}  ⬇ ${pName(ev.out)} · ${ar?"ضد":"מול"} ${opp}`};
+      return {title:`${ev.t==="r"?"🟥":"🟨"} ${ar?(ev.t==="r"?"بطاقة حمراء":"بطاقة صفراء"):(ev.t==="r"?"כרטיס אדום":"כרטיס צהוב")} ${ev.min}' · ${team}`,body:`${pName(ev.no)} · ${ar?"ضد":"מול"} ${opp}`}}
     if(kind==="test")return {title:ar?"🔔 تجربة إشعارات":"🔔 בדיקת התראות",body:ar?"الإشعارات تعمل ✓":"ההתראות עובדות ✓"};
   },cat,kind==="goal"?(ev&&ev.side==="us"?"goal_us":"goal_them"):/^(kick|k2|ht|ft)$/.test(kind)?"whistle":undefined);
 }
