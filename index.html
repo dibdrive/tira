@@ -305,6 +305,7 @@ header.hero::before,header.hero::after{pointer-events:none}
 .stats-note{position:relative;font-size:12px;opacity:.8;margin-top:6px}
 .teampick{position:relative;z-index:1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-inline-end:70px}
 .teampick::-webkit-scrollbar{display:none}
+.teampick[hidden]{display:none}
 .teampick a{flex:none;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.35);white-space:nowrap}
 .teampick a[aria-current="true"]{background:#fff;color:var(--pitch)}
 html.nonums .pl .no,html.nonums .pchip b,html.nonums .pnb,html.nonums .pno{display:none}
@@ -383,7 +384,9 @@ html.nonums .pl .no,html.nonums .pchip b,html.nonums .pnb,html.nonums .pno{displ
 
 <script>
 const T = "מ.כ. צעירי טירה";
-const TEAM=(window.TEAMS&&window.TEAMS[window.TEAM])?window.TEAM:"kb",TD=TEAM==="kb"?null:window.TEAMS[TEAM],NUMS=!TD||TD.nums!==false;
+/* a team with "hidden":true in teams.js is left out of the picker and opens only via an explicit ?t= link (until its coach is set up) */
+const SHOWN=Object.keys(window.TEAMS||{kb:1}).filter(id=>!(window.TEAMS||{})[id]||!window.TEAMS[id].hidden);
+const TEAM=(window.TEAMS&&window.TEAMS[window.TEAM]&&(!window.TEAMS[window.TEAM].hidden||/[?&]t=/.test(location.search)))?window.TEAM:"kb",TD=TEAM==="kb"?null:window.TEAMS[TEAM],NUMS=!TD||TD.nums!==false;
 if(!NUMS)document.documentElement.classList.add("nonums");
 const DK=k=>TEAM==="kb"?k:TEAM+"__"+k; /* Firestore doc id: ילדים ב׳ keeps plain ids, other teams are prefixed */
 const FIX = (TD?TD.fix:[
@@ -518,7 +521,8 @@ function renderStatic(){
   document.getElementById("langBtn").textContent=t("lang");
   document.title=(LANG==="ar"?"شباب الطيرة":"צעירי טירה")+" · "+teamLabel(TEAM)+" 2026/27";
   const tp=document.getElementById("teamPick");
-  if(tp)tp.innerHTML=Object.keys(window.TEAMS||{kb:1}).map(id=>`<a href="?t=${id}" data-team="${id}"${id===TEAM?' aria-current="true"':""}>${esc(teamLabel(id)||"ילדים ב׳")}</a>`).join("");
+  const tl=SHOWN.includes(TEAM)?SHOWN:[...SHOWN,TEAM];if(tp)tp.hidden=tl.length<2;
+  if(tp)tp.innerHTML=tl.map(id=>`<a href="?t=${id}" data-team="${id}"${id===TEAM?' aria-current="true"':""}>${esc(teamLabel(id)||"ילדים ב׳")}</a>`).join("");
   if(TD&&TD.table){const tb=document.querySelector('[data-t="tableBtn"]');if(tb)tb.href=TD.table}
 }
 function renderStats(){
@@ -1046,7 +1050,7 @@ if(NATIVE){const ext=u=>{try{const x=new URL(u,location.href);return /^https?:$/
 var PUSH_ST=null,pushBusy=false,pushAgain=false;
 /* push topics: ילדים ב׳ keeps "<cat>_<lang>", other teams "<team>_<cat>_<lang>"; a phone can follow several teams */
 const topicOf=(tm,c,l)=>(tm==="kb"?"":tm+"_")+c+"_"+l;
-const follows=()=>{try{const a=JSON.parse(localStorage.getItem("tira-follow")||"null");if(Array.isArray(a))return a.filter(x=>(window.TEAMS||{kb:1})[x])}catch(e){}return [TEAM]};
+const follows=()=>{try{const a=JSON.parse(localStorage.getItem("tira-follow")||"null");if(Array.isArray(a))return a.filter(x=>SHOWN.includes(x)||x===TEAM)}catch(e){}return [TEAM]};
 try{if(!localStorage.getItem("tira-follow"))localStorage.setItem("tira-follow",JSON.stringify([TEAM]))}catch(e){}
 const SUBBED=(()=>{try{return JSON.parse(localStorage.getItem("tira-subbed")||"{}")}catch(e){return {}}})();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1195,7 +1199,7 @@ function renderPrefs(){
   sec.hidden=false;const m=pushMode();
   const st=PUSH_ST,ar=LANG==="ar";
   const stTxt=!st?(ar?"⏳ جارٍ تفعيل الإشعارات…":"⏳ מפעיל התראות…"):st.s==="ok"?(ar?"✅ الإشعارات مفعّلة على هذا الهاتف":"✅ ההתראות פעילות בטלפון הזה"):st.s==="denied"?(ar?"🚫 الإشعارات مرفوضة – فعّلها في إعدادات الهاتف ← الإشعارات":"🚫 ההתראות חסומות – יש לאפשר בהגדרות הטלפון ← התראות"):(ar?"⚠️ تعذّر التفعيل":"⚠️ ההתראות לא הופעלו")+` <small dir="ltr">(${esc(String(st.m||"").slice(0,120))})</small>`;
-  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div>${Object.keys(window.TEAMS||{}).length>1?`<div class="slabel">${ar?"إشعارات للفرق:":"התראות עבור הקבוצות:"}</div><div class="tfollow">${Object.keys(window.TEAMS).map(id=>`<button class="pchip" data-follow="${id}" aria-pressed="${follows().includes(id)}" type="button">${esc(teamLabel(id))}</button>`).join("")}</div>`:""}<p class="hint" style="margin:8px 0 0">${stTxt}${st&&st.s!=="ok"?` <button class="lnk" data-pref-retry type="button">${ar?"إعادة المحاولة":"נסה שוב"}</button>`:""}</p>`;
+  sec.innerHTML=`<h2>${t("prefsH")}</h2><div class="prefs">${["all","res","ann","off"].map(k=>`<button class="pchip" data-pref="${k}" aria-pressed="${m===k}" type="button">${t("p_"+k)}</button>`).join("")}</div>${SHOWN.length>1?`<div class="slabel">${ar?"إشعارات للفرق:":"התראות עבור הקבוצות:"}</div><div class="tfollow">${SHOWN.map(id=>`<button class="pchip" data-follow="${id}" aria-pressed="${follows().includes(id)}" type="button">${esc(teamLabel(id))}</button>`).join("")}</div>`:""}<p class="hint" style="margin:8px 0 0">${stTxt}${st&&st.s!=="ok"?` <button class="lnk" data-pref-retry type="button">${ar?"إعادة المحاولة":"נסה שוב"}</button>`:""}</p>`;
 }
 document.getElementById("prefSec").addEventListener("click",e=>{if(e.target.closest("[data-pref-retry]")){PUSH_ST=null;renderPrefs();pushSubscribe();return}
   const f=e.target.closest("[data-follow]");if(f){const id=f.dataset.follow,cur=follows(),nx=cur.includes(id)?cur.filter(x=>x!==id):[...cur,id];try{localStorage.setItem("tira-follow",JSON.stringify(nx))}catch(_){}renderPrefs();pushSubscribe();return}const b=e.target.closest("[data-pref]");if(!b)return;try{localStorage.setItem(PREF_K,b.dataset.pref)}catch(_){}renderPrefs();pushSubscribe()});
