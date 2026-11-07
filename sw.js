@@ -1,4 +1,4 @@
-// Offline support for dibdrive.com/tira: page = network-first with cached fallback; libraries/fonts/icons = cache-first.
+// Offline support for dibdrive.com/tira: page = network-first with cached fallback; teams.js = network-first, revalidated so edits show at once; libraries/fonts/icons = cache-first.
 const C = "tira-v1";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil((async () => {
@@ -14,7 +14,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (u.origin === location.origin && /\/teams\.js$/.test(u.pathname)) {
-    e.respondWith(fetch(req).then(r => { if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(req.url.split("?")[0], cp)); } return r; })
+    e.respondWith(fetch(req.url, { cache: "no-cache" }).then(r => { if (r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(req.url.split("?")[0], cp)); } return r; })
       .catch(() => caches.match(req.url.split("?")[0])));
     return;
   }
