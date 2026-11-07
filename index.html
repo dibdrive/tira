@@ -990,7 +990,7 @@ document.getElementById("live").addEventListener("click",async e=>{
   if(a==="kick"){await patchGame(k,{live:{st:"1H",t1:now},events:x.events||[]});liveNotify("kick",k);return}
   if(a==="unlive"){await patchGame(k,{live:null});return}
   if(a==="ht"){await patchGame(k,{live:{...L,st:"HT",e1:now}});liveNotify("ht",k);return}
-  if(a==="k2"){await patchGame(k,{live:{...L,st:"2H",t2:now}});return}
+  if(a==="k2"){await patchGame(k,{live:{...L,st:"2H",t2:now}});liveNotify("k2",k);return}
   if(a==="ft"){if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ללחוץ שוב לסיום";return}await patchGame(k,{live:{...L,st:"FT",e2:now}});liveNotify("ft",k);return}
   if(a==="undo"){
     const back={"1H":"pre","HT":"1H","2H":"HT","FT":"2H"}[L.st];if(!back)return;
@@ -1080,10 +1080,11 @@ function liveNotify(kind,k,ev){
     if(kind==="kick")return {title:ar?"🟢 بدأت المباراة!":"🟢 המשחק התחיל!",body:`${team} – ${opp} · ${cardComp(g)}`};
     if(kind==="goal"&&ev&&ev.side==="us")return {title:`${ar?"⚽ هدف!":"⚽ גול!"} ${team} ${sc}`,body:`${ev.no!=null?pName(ev.no)+" ":""}${ev.min}'${ev.ast!=null?` · ${ar?"تمريرة":"בישול"}: ${pName(ev.ast)}`:""} · ${ar?"ضد":"מול"} ${opp}`};
     if(kind==="goal")return {title:`${ar?"هدف لـ":"גול ל"}${opp}`,body:`${team} ${sc} · ${ev?ev.min+"'":""}`};
+    if(kind==="k2")return {title:ar?"▶️ بدأ الشوط الثاني":"▶️ המחצית השנייה התחילה",body:`${team} ${sc} ${opp} · ${cardComp(g)}`};
     if(kind==="ht")return {title:`${ar?"⏸ استراحة":"⏸ מחצית"}: ${team} ${sc} ${opp}`,body:cardComp(g)};
     if(kind==="ft"){const o=outcome(x);return {title:`${ar?"🏁 النهاية":"🏁 סיום"}: ${team} ${sc} ${opp}`,body:`${o?t(o)+(o==="W"?"! 💙":""):""} · ${cardComp(g)}`}}
     if(kind==="test")return {title:ar?"🔔 تجربة إشعارات":"🔔 בדיקת התראות",body:ar?"الإشعارات تعمل ✓":"ההתראות עובדות ✓"};
-  },cat,kind==="goal"?(ev&&ev.side==="us"?"goal_us":"goal_them"):/^(kick|ht|ft)$/.test(kind)?"whistle":undefined);
+  },cat,kind==="goal"?(ev&&ev.side==="us"?"goal_us":"goal_them"):/^(kick|k2|ht|ft)$/.test(kind)?"whistle":undefined);
 }
 document.getElementById("auth").addEventListener("click",e=>{
   if(!e.target.closest("#pushCfg"))return;
