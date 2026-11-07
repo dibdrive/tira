@@ -1076,7 +1076,7 @@ function liveNotify(kind,k,ev){
   const g=gameByKey(k);if(!g)return;
   const cat=kind==="ft"?"result":kind==="test"?"ann":"live";
   pushSend(()=>{
-    const x=results[k]||{},sc=`${x.us??0}:${x.them??0}`,team=t("team"),opp=oName(g.o),ar=LANG==="ar";
+    const x=results[k]||{},sc=`${x.them??0}:${x.us??0}`/* RTL: digits run left-to-right, so "them:us" puts our score next to our name */,team=t("team"),opp=oName(g.o),ar=LANG==="ar";
     if(kind==="kick")return {title:ar?"🟢 بدأت المباراة!":"🟢 המשחק התחיל!",body:`${team} – ${opp} · ${cardComp(g)}`};
     if(kind==="goal"&&ev&&ev.side==="us")return {title:`${ar?"⚽ هدف!":"⚽ גול!"} ${team} ${sc}`,body:`${ev.no!=null?pName(ev.no)+" ":""}${ev.min}'${ev.ast!=null?` · ${ar?"تمريرة":"בישול"}: ${pName(ev.ast)}`:""} · ${ar?"ضد":"מול"} ${opp}`};
     if(kind==="goal")return {title:`${ar?"هدف لـ":"גול ל"}${opp}`,body:`${team} ${sc} · ${ev?ev.min+"'":""}`};
