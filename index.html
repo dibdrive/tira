@@ -259,6 +259,7 @@ html.native #installBar,html.native #auth,html.native #icsAll{display:none!impor
 .annl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .ann{background:var(--chalk);border-radius:12px;padding:10px 14px;border-inline-start:4px solid var(--pitch)}
 .annt{font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.annlink{display:inline-block;margin:4px 0;padding:4px 12px;border-radius:99px;background:#1877f2;color:#fff;text-decoration:none;font-weight:600;font-size:14px}
 .annd{font-size:12px;color:var(--muted);margin-top:4px}
 .annl.old .ann{border-inline-start-color:var(--line);opacity:.85}
 .annmore{margin-top:8px;font-size:13px}
@@ -1176,10 +1177,14 @@ document.getElementById("auth").addEventListener("click",e=>{
 const ANN_K="_ann",TR_K="_train";
 const annItems=()=>((results[ANN_K]||{}).items||[]).slice().sort((a,b)=>b.ts-a.ts);
 let annOpen=false;
+/* links in an announcement become buttons that open outside the app (Facebook post → Facebook app) */
+const annLink=t0=>t0.replace(/https?:\/\/[^\s<]+/g,u=>{const raw=u.replace(/&amp;/g,"&"),h=(raw.match(/^https?:\/\/(?:www\.|m\.)?([^\/?#]+)/)||[])[1]||"";
+  const lbl=/(^|\.)(facebook\.com|fb\.watch|fb\.com)$/.test(h)?(LANG==="ar"?"منشور في فيسبوك":"פוסט בפייסבוק"):/(^|\.)instagram\.com$/.test(h)?(LANG==="ar"?"منشور في إنستغرام":"פוסט באינסטגרם"):/(^|\.)(youtube\.com|youtu\.be)$/.test(h)?(LANG==="ar"?"فيديو على يوتيوب":"סרטון ביוטיוב"):h;
+  return `<a class="annlink" href="${u}" target="_blank" rel="noopener">🔗 ${esc(lbl)}</a>`});
 function renderAnn(){
   const sec=document.getElementById("annSec");if(!sec)return;
   const items=annItems(),fresh=items.filter(a=>Date.now()-a.ts<14*864e5);
-  const row=(a,admin)=>`<li class="ann"><div class="annt">${esc(a.text).replace(/\n/g,"<br>")}</div><div class="annd">${fmt(new Date(a.ts))} · ${String(new Date(a.ts).getHours()).padStart(2,"0")}:${String(new Date(a.ts).getMinutes()).padStart(2,"0")}${admin?` <button class="lnk annx" data-anndel="${a.id}" type="button">מחק</button>`:""}</div></li>`;
+  const row=(a,admin)=>`<li class="ann"><div class="annt">${annLink(esc(a.text)).replace(/\n/g,"<br>")}</div><div class="annd">${fmt(new Date(a.ts))} · ${String(new Date(a.ts).getHours()).padStart(2,"0")}:${String(new Date(a.ts).getMinutes()).padStart(2,"0")}${admin?` <button class="lnk annx" data-anndel="${a.id}" type="button">מחק</button>`:""}</div></li>`;
   let h="";
   if(fresh.length)h+=`<ul class="annl">${row(fresh[0],canEdit)}</ul>`;
   const rest=items.slice(fresh.length?1:0,6);
