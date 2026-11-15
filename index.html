@@ -439,7 +439,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
  scorersL:"מבקיעים",flow:"מהלך המשחק",player:"שחקן",total:"סה״כ",noScorers:"אחרי שיוזנו מבקיעים, הטבלה תתמלא כאן.",assistsH:"מלך הבישולים",noAssists:"אחרי שיוזנו בישולים, הטבלה תתמלא כאן.",pAssists:"בישולים",astBy:"בישול",
  gk:"שוער",apps:n=>`המספר בצד = במכמה משחקים השחקן היה בסגל, מתוך ${n} משחקים שבהם נרשם סגל`,tapPlayer:"לחצו על שחקן כדי לראות את הנתונים שלו",
  liveOn:"● משחק חי",ft:"סיום",h1:"מחצית ראשונה",h2:"מחצית שנייה",added:" · תוספת זמן",brk:"הפסקה · עד המחצית השנייה",brkOver:"הפסקה הסתיימה",ended:"המשחק הסתיים",
- unknownScorer:"מבקיע לא ידוע",xi:"הרכב פותח",subsIn:"נכנסו מהספסל",yc:"כרטיס צהוב",rc:"כרטיס אדום",subT:"חילוף",pYellow:"צהובים",pRed:"אדומים",goalFor:o=>`גול ל${o}`,noGoals:"עוד אין שערים במשחק.",
+ unknownScorer:"מבקיע לא ידוע",getApp:"📲 להורדת האפליקציה:",xi:"הרכב פותח",subsIn:"נכנסו מהספסל",yc:"כרטיס צהוב",rc:"כרטיס אדום",subT:"חילוף",pYellow:"צהובים",pRed:"אדומים",goalFor:o=>`גול ל${o}`,noGoals:"עוד אין שערים במשחק.",
  share:"📤 שתף תוצאה",shareNext:"📤 שתף משחק",cheer:"כולם מוזמנים לעודד! 💙",sharing:"מכין תמונה…",
  waze:"ניווט בוויז",wazeTown:tw=>`ניווט ל${tw}`,venue:"מגרש",
  login:"כניסת מנהל",logout:"יציאה",editMode:"מצב עריכה ✓",notAllowed:"החשבון הזה לא מורשה לערוך",loading:"טוען…",offline:"אין חיבור לשרת. מציג נתונים שמורים",
@@ -459,7 +459,7 @@ ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشا�
  scorersL:"الهدّافون",flow:"مجريات المباراة",player:"اللاعب",total:"المجموع",noScorers:"بعد تسجيل الأهداف ستظهر القائمة هنا.",assistsH:"ملك التمريرات الحاسمة",noAssists:"بعد تسجيل التمريرات الحاسمة ستظهر القائمة هنا.",pAssists:"تمريرات حاسمة",astBy:"تمريرة",
  gk:"حارس",apps:n=>`الرقم بجانب اللاعب = عدد المباريات التي كان فيها بالتشكيلة، من أصل ${n}`,tapPlayer:"اضغطوا على لاعب لرؤية معلوماته",
  liveOn:"● بث مباشر",ft:"انتهت",h1:"الشوط الأول",h2:"الشوط الثاني",added:" · وقت بدل ضائع",brk:"استراحة · حتى الشوط الثاني",brkOver:"انتهت الاستراحة",ended:"انتهت المباراة",
- unknownScorer:"هدّاف غير معروف",xi:"التشكيلة الأساسية",subsIn:"دخلوا من الدكة",yc:"بطاقة صفراء",rc:"بطاقة حمراء",subT:"تبديل",pYellow:"صفراء",pRed:"حمراء",goalFor:o=>`هدف لـ${o}`,noGoals:"لا أهداف بعد.",
+ unknownScorer:"هدّاف غير معروف",getApp:"📲 لتحميل التطبيق:",xi:"التشكيلة الأساسية",subsIn:"دخلوا من الدكة",yc:"بطاقة صفراء",rc:"بطاقة حمراء",subT:"تبديل",pYellow:"صفراء",pRed:"حمراء",goalFor:o=>`هدف لـ${o}`,noGoals:"لا أهداف بعد.",
  share:"📤 مشاركة النتيجة",shareNext:"📤 مشاركة المباراة",cheer:"الجميع مدعوون للتشجيع! 💙",sharing:"جاري تحضير الصورة…",
  waze:"اتجاهات Waze",wazeTown:tw=>`اتجاهات إلى ${tw}`,venue:"الملعب",
  login:"دخول المسؤول",logout:"خروج",editMode:"وضع التعديل ✓",notAllowed:"هذا الحساب غير مخوّل بالتعديل",loading:"جاري التحميل…",offline:"لا اتصال بالخادم. تظهر بيانات محفوظة",
@@ -859,10 +859,10 @@ async function shareResult(k,btn){
     ctx.fillStyle="#fff";ctx.beginPath();ctx.roundRect(W/2-260,H-230,520,200,28);ctx.fill();
     ctx.fillStyle="#5f6a85";ctx.font=`700 26px ${body}`;ctx.fillText(t("sponsor"),W/2,H-196);
     if(sp){const sw=300,sh=sw*sp.height/sp.width;ctx.drawImage(sp,W/2-sw/2,H-185,sw,Math.min(sh,150))}
-    ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("dibdrive.com/tira",W/2,H-245);
+    ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("📲 dibdrive.com/tira/app.html",W/2,H-245);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-${iso(g.date)}.png`,{type:"image/png"});
-    const txt=`${cardComp(g)} | ${t("team")} ${x.us} : ${x.them} ${oName(g.o)} · dibdrive.com/tira`;
+    const txt=`${cardComp(g)} | ${t("team")} ${x.us} : ${x.them} ${oName(g.o)}\n${t("getApp")} https://dibdrive.com/tira/app.html`;
     await shareFile(blob,file,txt);
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
@@ -898,10 +898,10 @@ async function shareNext(k,btn){
     ctx.fillStyle="#fff";ctx.beginPath();ctx.roundRect(W/2-260,H-230,520,200,28);ctx.fill();
     ctx.fillStyle="#5f6a85";ctx.font=`700 26px ${body}`;ctx.fillText(t("sponsor"),W/2,H-196);
     if(sp){const sw=300,sh=sw*sp.height/sp.width;ctx.drawImage(sp,W/2-sw/2,H-185,sw,Math.min(sh,150))}
-    ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("dibdrive.com/tira",W/2,H-245);
+    ctx.fillStyle="rgba(255,255,255,.8)";ctx.font=`600 30px ${body}`;ctx.direction="ltr";ctx.fillText("📲 dibdrive.com/tira/app.html",W/2,H-245);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const file=new File([blob],`tira-next-${iso(g.date)}.png`,{type:"image/png"});
-    const txt=`${t("next")} (${cardComp(g)}): ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""} · dibdrive.com/tira`;
+    const txt=`${t("next")} (${cardComp(g)}): ${t("team")} – ${oName(g.o)} · ${fmt(g.date)}${g.time?" · "+g.time:""}${v?" · "+v:""}\n${t("getApp")} https://dibdrive.com/tira/app.html`;
     await shareFile(blob,file,txt);
   }finally{if(btn){btn.disabled=false;btn.textContent=old}}
 }
