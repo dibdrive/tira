@@ -2,8 +2,12 @@
 // Dashboard: Workers & Pages > tira-push. URL: https://tira-push.dib-arkan.workers.dev/
 // - POST /  (Authorization: Bearer <GitHub token of the admin "dibdrive">) body {cat, snd?, team?, he:{title,body}, ar:{title,body}} -> instant push
 //   team: id from teams.js ("kc", "nc", ...); topics are "<team>_<cat>_<lang>", ילדים ב׳ (kb / no team) keeps "<cat>_<lang>"
-// - Cron "0 4,5,8,9 * * *" (UTC): 07:00 Israel = "game today" reminder, 11:00 Israel = "training today" reminder (works in summer and winter time)
-// - GET /?dry=game|training  -> shows what the reminder would send today (nothing is sent)
+// - Cron "*/15 * * * *": every quarter hour (Israel time) it sends what is due:
+//     07:00 = "game today" reminder;
+//     training reminders at each training's own reminder time ("remind", set by the coach), or by default
+//     11:00 for trainings from 13:00 on and 2 hours before earlier ones (not before 06:00).
+//   One-off trainings live in _train.extra [{date:"YYYY-MM-DD",time,place,remind}], weekly ones in _train.slots.
+// - GET /?dry=game|training|HH:MM  -> shows what would be sent today (nothing is sent)
 // Secret FIREBASE_SA = full JSON of a Firebase service-account key (Settings > Variables and Secrets).
 const PROJECT = "tira-kids";
 const ADMIN = "dibdrive";
@@ -102,19 +106,25 @@ async function loadSite() {
 const isoFromDmy = s => { const [d, m, y] = s.split("/"); return `20${y}-${m}-${d}`; };
 // seconds from now until hh:mm today in Israel (at least 30 min; 6 h when there is no time)
 const ttlUntil = hhmm => { const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || ""); if (!m) return 21600; const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map(x => [x.type, x.value])); return Math.max(1800, ((+m[1]) * 60 + (+m[2]) - (+p.hour * 60 + +p.minute)) * 60); };
+// Israel date + quarter-hour tick ("HH:MM", minutes floored to 00/15/30/45) for a given moment
+const ilAt = ms => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(ms)).map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, tick: `${p.hour}:${String(Math.floor(+p.minute / 15) * 15).padStart(2, "0")}` }; };
+const q15 = hhmm => { const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || ""); if (!m) return ""; return `${String(+m[1]).padStart(2, "0")}:${String(Math.floor(+m[2] / 15) * 15).padStart(2, "0")}`; };
+// when a training's reminder goes out: its own "remind", else 11:00 (training from 13:00) or 2 h before (not before 06:00)
+const trainRemindAt = s => { if (s.remind) return q15(s.remind); const m = /^(\d{1,2}):(\d{2})/.exec(s.time || ""); if (!m) return "11:00"; const t = +m[1] * 60 + +m[2]; if (t >= 13 * 60) return "11:00"; const r = Math.max(6 * 60, t - 120); return q15(`${Math.floor(r / 60)}:${r % 60}`); };
 const ilNow = () => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour }; };
 
-async function reminderMsgs(kind, today) {
+// tick: "HH:MM" quarter hour, or "*" = every training reminder of the day (dry run)
+async function reminderMsgs(tick, today) {
   const [teams, all] = await Promise.all([loadSite(), loadResults()]);
   const msgs = [];
   for (const id in teams) {
     const pre = id === "kb" ? "" : id + "__", res = {};
     for (const k in all) { if (id === "kb" ? !k.includes("__") : k.startsWith(pre)) res[k.slice(pre.length)] = all[k]; }
-    msgs.push(...teamReminder(kind, today, id, teams[id], res));
+    msgs.push(...teamReminder(tick, today, id, teams[id], res));
   }
   return msgs;
 }
-function teamReminder(kind, today, id, team, res) {
+function teamReminder(tick, today, id, team, res) {
   const { fix, oppAr = {}, town = {} } = team, tp = (id === "kb" ? "" : id + "_") + "remind_", lbl = l => " · " + (team[l] || "");
   const S = team.s || { he: { leagueFull: "ליגת ילדים ב׳", cupFull: "גביע ילדים ב׳" }, ar: { leagueFull: "دوري الأولاد ب׳", cupFull: "كأس الأولاد ب׳" } };
   const games = [];
@@ -125,7 +135,7 @@ function teamReminder(kind, today, id, team, res) {
   for (const x of Object.values(res)) if (x && x.comp === "cup" && x.date) games.push({ comp: "cup", o: x.opponent || "", home: !!x.home, date: x.date, time: x.time || "", stage: x.stage || "", x });
   const todays = games.filter(g => g.date === today && !(g.x.us != null && g.x.them != null));
   const msgs = [];
-  if (kind === "game") {
+  if (tick === "07:00") {
     for (const g of todays) {
       const heWhere = g.x.venue || (g.home ? "אצטדיון טירה" : (town[g.o] || [])[0] || "");
       const arWhere = g.x.venue || (g.home ? "ملعب الطيرة" : (town[g.o] || [])[1] || "");
@@ -137,12 +147,16 @@ function teamReminder(kind, today, id, team, res) {
       msgs.push({ topic: tp + "ar", ttl, title: `⚽ مباراة اليوم!${g.time ? " " + g.time : ""}${lbl("ar")}`,
         body: `شباب الطيرة ضد ${oppAr[g.o] || g.o} · ${g.home ? "على أرضنا" : "خارج أرضنا"}${arWhere ? " · " + arWhere : ""}\n${arComp} · بالتوفيق! 💙` });
     }
-  } else if (kind === "training" && !todays.length) {
+  }
+  {
     const tr = res._train || {};
     const dow = new Date(today + "T12:00:00Z").getUTCDay();
     const DAY_HE = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
     const DAY_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    const trs = (tr.slots || []).filter(s => +s.d === dow && !(tr.cancel || {})[today + "_" + (s.time || "")]).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+    // weekly trainings are skipped on game days; one-off trainings always count
+    const weekly = todays.length ? [] : (tr.slots || []).filter(s => +s.d === dow);
+    const once = (tr.extra || []).filter(s => s.date === today);
+    const trs = [...weekly, ...once].filter(s => !(tr.cancel || {})[today + "_" + (s.time || "")] && (tick === "*" || trainRemindAt(s) === tick)).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
     for (const s of trs) {
       const ttl = ttlUntil(s.time);
       msgs.push({ topic: tp + "he", ttl, title: `🗓️ היום אימון${s.time ? " ב-" + s.time : ""}${lbl("he")}`, body: `צעירי טירה · יום ${DAY_HE[dow]}${s.place ? " · " + s.place : ""}\nנתראה במגרש! 💙` });
@@ -157,7 +171,7 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (req.method === "GET") {
       const dry = new URL(req.url).searchParams.get("dry");
-      if (dry === "game" || dry === "training") { const n = ilNow(); return json({ dry, today: n.date, hour: n.hour, msgs: await reminderMsgs(dry, n.date) }); }
+      if (dry === "game" || dry === "training" || /^\d{2}:\d{2}$/.test(dry || "")) { const n = ilAt(Date.now()); const tick = dry === "game" ? "07:00" : dry === "training" ? "*" : q15(dry); return json({ dry, today: n.date, now: n.tick, tick, msgs: await reminderMsgs(tick, n.date) }); }
       return json({ ok: true, service: "tira-push" });
     }
     if (req.method !== "POST") return json({ error: "method" }, 405);
@@ -174,11 +188,9 @@ export default {
     return json({ ok, out }, ok ? 200 : 502);
   },
   async scheduled(event, env, ctx) {
-    const n = ilNow();
-    const kind = n.hour === 7 ? "game" : n.hour === 11 ? "training" : null;
-    if (!kind) return;
-    const msgs = await reminderMsgs(kind, n.date);
-    console.log("reminder", kind, n.date, msgs.length + " msgs");
+    const n = ilAt(event.scheduledTime || Date.now());
+    const msgs = await reminderMsgs(n.tick, n.date);
+    if (msgs.length) console.log("reminder", n.date, n.tick, msgs.length + " msgs");
     if (msgs.length) await sendAll(env, msgs);
   },
 };
