@@ -274,6 +274,9 @@ html.native #installBar,html.native #auth,html.native #icsAll{display:none!impor
 .trl li.cx>span:first-child{text-decoration:line-through;color:var(--muted)}
 .tradd{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .tradd .txt{flex:1 1 120px}
+.trrem{display:flex;align-items:center;gap:4px;font-size:13px;flex:1 1 150px}
+.trrem .txt{flex:1 1 90px}
+.trbell{opacity:.7;font-weight:400}
 .prefs{display:flex;flex-wrap:wrap;gap:6px}
 .netbar{position:sticky;top:0;z-index:5;background:#b23a32;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px 10px}
 .netbar[hidden]{display:none}
@@ -428,7 +431,7 @@ const S={
 he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון 2 · גביע ילדים ב׳ · עונת 2026/27",
  wins:"ניצחונות",draws:"תיקו",losses:"הפסדים",gf:"שערי זכות",ga:"שערי חובה",pts:"נקודות",
  statsNote:p=>`מאזן הליגה בלבד · הגביע מסוכם בנפרד למטה · שוחקו ${p} מתוך ${FIX.length}`,
- sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",annH:"📢 הודעות מהקבוצה",annOld:n=>`הודעות קודמות (${n})`,annPushT:"📢 הודעה מצעירי טירה",trainH:"🗓️ אימונים",trainNext:"האימון הבא",trainNone:"עוד לא נקבעו אימונים קבועים",cancelled:"בוטל",trOffT:"❌ האימון בוטל",trOnT:"✅ האימון מתקיים כרגיל",prefsH:"🔔 אילו התראות לקבל?",p_all:"הכול (כולל כל גול)",p_res:"תוצאות, תזכורות והודעות",p_ann:"רק הודעות מהקבוצה",p_off:"בלי התראות",netOff:"📶 אין חיבור – מוצגים הנתונים האחרונים",h2h:"מפגשים קודמים",tableBtn:"📊 טבלת הליגה",addCal:"📅 הוסף ליומן",icsAll:"📅 כל משחקי העונה ליומן",photos:"תמונות מהמשחק",photo:"תמונה",galErr:"לא ניתן לטעון תמונות",installBtn:"📲 הוסיפו את האתר למסך הבית",instIOS:"בספארי: לחצו על כפתור השיתוף ⬆️ ואז על „הוספה למסך הבית”",instSam:"בדפדפן סמסונג: לחצו על התפריט ☰ בתחתית המסך ← „הוסף דף אל” ← „מסך הבית”",instAnd:"בכרום: לחצו על התפריט ⋮ ואז על „הוספה למסך הבית” או „התקנת אפליקציה”",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
+ sponsor:"בחסות",scorersH:"מלך השערים",rosterH:"סגל הקבוצה",leagueFull:"ליגת ילדים ב׳",annH:"📢 הודעות מהקבוצה",annOld:n=>`הודעות קודמות (${n})`,annPushT:"📢 הודעה מצעירי טירה",trainH:"🗓️ אימונים",trainNext:"האימון הבא",trainNone:"עוד לא נקבעו אימונים קבועים",cancelled:"בוטל",trOffT:"❌ האימון בוטל",trOnT:"✅ האימון מתקיים כרגיל",trAddT:"🗓️ נוסף אימון",trOnce:"חד־פעמי",prefsH:"🔔 אילו התראות לקבל?",p_all:"הכול (כולל כל גול)",p_res:"תוצאות, תזכורות והודעות",p_ann:"רק הודעות מהקבוצה",p_off:"בלי התראות",netOff:"📶 אין חיבור – מוצגים הנתונים האחרונים",h2h:"מפגשים קודמים",tableBtn:"📊 טבלת הליגה",addCal:"📅 הוסף ליומן",icsAll:"📅 כל משחקי העונה ליומן",photos:"תמונות מהמשחק",photo:"תמונה",galErr:"לא ניתן לטעון תמונות",installBtn:"📲 הוסיפו את האתר למסך הבית",instIOS:"בספארי: לחצו על כפתור השיתוף ⬆️ ואז על „הוספה למסך הבית”",instSam:"בדפדפן סמסונג: לחצו על התפריט ☰ בתחתית המסך ← „הוסף דף אל” ← „מסך הבית”",instAnd:"בכרום: לחצו על התפריט ⋮ ואז על „הוספה למסך הבית” או „התקנת אפליקציה”",cupFull:"גביע ילדים ב׳",coachRole:"מאמן הקבוצה",leagueH:"ליגה · שרון 2",cupH:"🏆 גביע ילדים ב׳",
  leagueSum:p=>`${p} מתוך ${FIX.length} שוחקו`,cupSum:(n,c)=>`${n} משחקים · ${c.w} ניצחונות · ${c.d} תיקו · ${c.l} הפסדים · שערי זכות ${c.gf} · שערי חובה ${c.ga}`,
  days:["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"],day:d=>`יום ${d}`,
  months:["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
@@ -448,7 +451,7 @@ he:{team:"מ.כ. צעירי טירה",eyebrow:"ליגת ילדים ב׳ שרון
 ar:{team:"شباب الطيرة",eyebrow:"دوري الأولاد ب׳ الشارون 2 · كأس الأولاد ب׳ · موسم 2026/27",
  wins:"فوز",draws:"تعادل",losses:"خسارة",gf:"أهداف لنا",ga:"أهداف علينا",pts:"نقاط",
  statsNote:p=>`حصيلة الدوري فقط · الكأس منفصل في الأسفل · لُعبت ${p} من ${FIX.length}`,
- sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",annH:"📢 رسائل من الفريق",annOld:n=>`رسائل سابقة (${n})`,annPushT:"📢 رسالة من شباب الطيرة",trainH:"🗓️ التدريبات",trainNext:"التدريب القادم",trainNone:"لم تُحدَّد مواعيد التدريب بعد",cancelled:"أُلغي",trOffT:"❌ أُلغي التدريب",trOnT:"✅ التدريب في موعده",prefsH:"🔔 أي إشعارات تريد؟",p_all:"الكل (مع كل هدف)",p_res:"النتائج والتذكيرات والرسائل",p_ann:"رسائل الفريق فقط",p_off:"بدون إشعارات",netOff:"📶 لا يوجد اتصال – تُعرض آخر البيانات",h2h:"مواجهات سابقة",tableBtn:"📊 جدول الدوري",addCal:"📅 أضف إلى التقويم",icsAll:"📅 كل مباريات الموسم إلى التقويم",photos:"صور من المباراة",photo:"صورة",galErr:"تعذّر تحميل الصور",installBtn:"📲 أضيفوا الموقع إلى الشاشة الرئيسية",instIOS:"في سفاري: اضغطوا زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»",instSam:"في متصفح سامسونج: اضغطوا القائمة ☰ في أسفل الشاشة ← «إضافة صفحة إلى» ← «الشاشة الرئيسية»",instAnd:"في كروم: اضغطوا القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
+ sponsor:"برعاية",scorersH:"الهدّافون",rosterH:"لاعبو الفريق",leagueFull:"دوري الأولاد ب׳",annH:"📢 رسائل من الفريق",annOld:n=>`رسائل سابقة (${n})`,annPushT:"📢 رسالة من شباب الطيرة",trainH:"🗓️ التدريبات",trainNext:"التدريب القادم",trainNone:"لم تُحدَّد مواعيد التدريب بعد",cancelled:"أُلغي",trOffT:"❌ أُلغي التدريب",trOnT:"✅ التدريب في موعده",trAddT:"🗓️ أُضيف تدريب",trOnce:"لمرة واحدة",prefsH:"🔔 أي إشعارات تريد؟",p_all:"الكل (مع كل هدف)",p_res:"النتائج والتذكيرات والرسائل",p_ann:"رسائل الفريق فقط",p_off:"بدون إشعارات",netOff:"📶 لا يوجد اتصال – تُعرض آخر البيانات",h2h:"مواجهات سابقة",tableBtn:"📊 جدول الدوري",addCal:"📅 أضف إلى التقويم",icsAll:"📅 كل مباريات الموسم إلى التقويم",photos:"صور من المباراة",photo:"صورة",galErr:"تعذّر تحميل الصور",installBtn:"📲 أضيفوا الموقع إلى الشاشة الرئيسية",instIOS:"في سفاري: اضغطوا زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»",instSam:"في متصفح سامسونج: اضغطوا القائمة ☰ في أسفل الشاشة ← «إضافة صفحة إلى» ← «الشاشة الرئيسية»",instAnd:"في كروم: اضغطوا القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق»",cupFull:"كأس الأولاد ب׳",coachRole:"مدرّب الفريق",leagueH:"الدوري · الشارون 2",cupH:"🏆 كأس الأولاد ب׳",
  leagueSum:p=>`لُعبت ${p} من ${FIX.length}`,cupSum:(n,c)=>`${n} مباريات · ${c.w} فوز · ${c.d} تعادل · ${c.l} خسارة · أهداف لنا ${c.gf} · أهداف علينا ${c.ga}`,
  days:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],day:d=>d,
  months:["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"],
@@ -1208,12 +1211,17 @@ document.getElementById("annSec").addEventListener("click",async e=>{
 });
 // --- trainings ---
 const trDoc=()=>results[TR_K]||{slots:[],cancel:{}};
+/* every write keeps all three parts: weekly slots, cancelled dates, one-off trainings (extra) */
+const trSave=patch=>{const tr=trDoc();return writeDoc(TR_K,{slots:tr.slots||[],cancel:tr.cancel||{},extra:tr.extra||[],...patch})};
+/* reminder time: the coach's own, else 11:00 for trainings from 13:00 on, else 2 hours before (not before 06:00); quarter hours, like the push worker */
+const q15=v=>{const m=/^(\d{1,2}):(\d{2})/.exec(v||"");return m?`${String(+m[1]).padStart(2,"0")}:${String(Math.floor(+m[2]/15)*15).padStart(2,"0")}`:""};
+const trRemindAt=s=>{if(s.remind)return q15(s.remind);const m=/^(\d{1,2}):(\d{2})/.exec(s.time||"");if(!m)return "11:00";const t0=+m[1]*60+ +m[2];if(t0>=13*60)return "11:00";const r=Math.max(360,t0-120);return q15(`${Math.floor(r/60)}:${r%60}`)};
 function upcomingTrainings(n){
-  const tr=trDoc(),out=[],t0=today();if(!(tr.slots||[]).length)return out;
+  const tr=trDoc(),out=[],t0=today();if(!(tr.slots||[]).length&&!(tr.extra||[]).length)return out;
   for(let i=0;i<21&&out.length<n;i++){const d=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i);
-    for(const s of (tr.slots||[]).filter(s=>+s.d===d.getDay()).sort((a,b)=>(a.time||"").localeCompare(b.time||""))){
+    for(const s of [...(tr.slots||[]).filter(s=>+s.d===d.getDay()),...(tr.extra||[]).filter(s=>s.date===iso(d)).map(s=>({...s,once:true}))].sort((a,b)=>(a.time||"").localeCompare(b.time||""))){
       if(i===0&&s.time){const [hh,mm]=s.time.split(":").map(Number);if(new Date().getHours()*60+new Date().getMinutes()>hh*60+mm+90)continue}
-      out.push({date:d,iso:iso(d),...s,key:iso(d)+"_"+(s.time||""),cancelled:!!(tr.cancel||{})[iso(d)+"_"+(s.time||"")]})}}
+      out.push({...s,date:d,iso:iso(d),key:iso(d)+"_"+(s.time||""),cancelled:!!(tr.cancel||{})[iso(d)+"_"+(s.time||"")]})}}
   return out.slice(0,n);
 }
 const trLabel=x=>`${t("day",DAYS()[x.date.getDay()])} ${fmt(x.date)}${x.time?` · ${x.time}`:""}${x.place?` · ${esc(x.place)}`:""}`;
@@ -1221,24 +1229,38 @@ function renderTrain(){
   const sec=document.getElementById("trainSec");if(!sec)return;
   const tr=trDoc(),up=upcomingTrainings(canEdit?6:3);
   let h=`<h2>${t("trainH")}</h2>`;
-  if(!(tr.slots||[]).length&&!canEdit){sec.hidden=true;sec.innerHTML="";return}
+  const hasAny=(tr.slots||[]).length||up.length;
+  if(!hasAny&&!canEdit){sec.hidden=true;sec.innerHTML="";return}
   sec.hidden=false;
-  if(!(tr.slots||[]).length)h+=`<p class="empty">${t("trainNone")}</p>`;
+  const bell=s=>canEdit?` <small class="trbell">🔔 ${trRemindAt(s)}</small>`:"";
+  if(!hasAny)h+=`<p class="empty">${t("trainNone")}</p>`;
   else{
-    h+=`<div class="trweek">${(tr.slots||[]).slice().sort((a,b)=>a.d-b.d||(a.time||"").localeCompare(b.time||"")).map(s=>`<span class="h2i">${t("day",DAYS()[s.d])}${s.time?` · ${s.time}`:""}${s.place?` · ${esc(s.place)}`:""}${canEdit?` <button class="lnk" data-trdel="${s.d}|${s.time||""}" type="button" aria-label="הסר">×</button>`:""}</span>`).join("")}</div>`;
-    h+=`<ul class="trl">${up.map((x,i)=>`<li class="${x.cancelled?"cx":""}${i===0&&!canEdit?" nx":""}"><span>${i===0?`<b>${t("trainNext")}:</b> `:""}${trLabel(x)}</span>${x.cancelled?`<span class="chip L">${t("cancelled")}</span>`:""}${canEdit?`<button class="btn sm" data-trx="${x.key}" type="button">${x.cancelled?"↺ החזר":"❌ בטל"}</button>`:""}</li>`).join("")}</ul>`;
+    if((tr.slots||[]).length)h+=`<div class="trweek">${(tr.slots||[]).slice().sort((a,b)=>a.d-b.d||(a.time||"").localeCompare(b.time||"")).map(s=>`<span class="h2i">${t("day",DAYS()[s.d])}${s.time?` · ${s.time}`:""}${s.place?` · ${esc(s.place)}`:""}${bell(s)}${canEdit?` <button class="lnk" data-trdel="${s.d}|${s.time||""}" type="button" aria-label="הסר">×</button>`:""}</span>`).join("")}</div>`;
+    h+=`<ul class="trl">${up.map((x,i)=>`<li class="${x.cancelled?"cx":""}${i===0&&!canEdit?" nx":""}"><span>${i===0?`<b>${t("trainNext")}:</b> `:""}${trLabel(x)}${x.once?` <span class="chip">${t("trOnce")}</span>`:""}${x.once?bell(x):""}</span>${x.cancelled?`<span class="chip L">${t("cancelled")}</span>`:""}${canEdit?(x.once?`<button class="btn sm" data-trodel="${x.key}" type="button">🗑 מחק</button>`:`<button class="btn sm" data-trx="${x.key}" type="button">${x.cancelled?"↺ החזר":"❌ בטל"}</button>`):""}</li>`).join("")}</ul>`;
   }
-  if(canEdit)h+=`<div class="tradd"><select class="txt" id="trDay">${DAYS().map((d,i)=>`<option value="${i}">${t("day",d)}</option>`).join("")}</select><input class="txt" type="time" id="trTime" value="17:00"><input class="txt" id="trPlace" placeholder="מגרש (לא חובה)"><button class="btn" id="trAdd" type="button">+ הוסף אימון קבוע</button></div><label class="slabel"><input type="checkbox" id="trPush" checked> שלח התראה להורים כשמבטלים או מחזירים אימון</label>`;
+  if(canEdit)h+=`<div class="tradd"><select class="txt" id="trDay">${DAYS().map((d,i)=>`<option value="${i}">${t("day",d)}</option>`).join("")}</select><input class="txt" type="time" id="trTime" value="17:00"><input class="txt" id="trPlace" placeholder="מגרש (לא חובה)"><label class="trrem">🔔 תזכורת <input class="txt" type="time" id="trRemind" step="900" title="ריק = אוטומטי"></label><button class="btn" id="trAdd" type="button">+ הוסף אימון קבוע</button></div>
+  <div class="tradd"><input class="txt" type="date" id="toDate" value="${iso(today())}"><input class="txt" type="time" id="toTime" value="09:30"><input class="txt" id="toPlace" placeholder="מגרש (לא חובה)"><label class="trrem">🔔 תזכורת <input class="txt" type="time" id="toRemind" step="900" value="07:30"></label><button class="btn" id="toAdd" type="button">+ הוסף אימון חד־פעמי</button></div>
+  <p class="hint">🔔 תזכורת: השעה שבה ההורים יקבלו "היום אימון" (ברבע שעה עגול). באימון קבוע אפשר להשאיר ריק: 11:00 לאימון מ־13:00 ואילך, ושעתיים לפני אימון מוקדם יותר.</p><label class="slabel"><input type="checkbox" id="trPush" checked> שלח התראה להורים כשמבטלים, מחזירים או מוסיפים אימון</label>`;
   sec.innerHTML=h;
 }
 document.getElementById("trainSec").addEventListener("click",async e=>{
   if(!canEdit)return;const tr=trDoc();
-  if(e.target.closest("#trAdd")){const d=+document.getElementById("trDay").value,time=document.getElementById("trTime").value||"",place=document.getElementById("trPlace").value.trim();
-    await writeDoc(TR_K,{slots:[...(tr.slots||[]).filter(s=>!(+s.d===d&&s.time===time)),{d,time,place}],cancel:tr.cancel||{}});renderTrain();return}
-  const del=e.target.closest("[data-trdel]");if(del){const [d,time]=del.dataset.trdel.split("|");await writeDoc(TR_K,{slots:(tr.slots||[]).filter(s=>!(String(s.d)===d&&(s.time||"")===time)),cancel:tr.cancel||{}});renderTrain();return}
+  if(e.target.closest("#trAdd")){const d=+document.getElementById("trDay").value,time=document.getElementById("trTime").value||"",place=document.getElementById("trPlace").value.trim(),remind=q15(document.getElementById("trRemind").value);
+    const slot={d,time,place};if(remind)slot.remind=remind;
+    await trSave({slots:[...(tr.slots||[]).filter(s=>!(+s.d===d&&s.time===time)),slot]});renderTrain();return}
+  if(e.target.closest("#toAdd")){const date=document.getElementById("toDate").value,time=document.getElementById("toTime").value||"",place=document.getElementById("toPlace").value.trim(),remind=q15(document.getElementById("toRemind").value);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<iso(today()))return;
+    const it={date,time,place};if(remind)it.remind=remind;
+    const extra=[...(tr.extra||[]).filter(s=>s.date>=iso(today())&&!(s.date===date&&(s.time||"")===time)),it].sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+    await trSave({extra});renderTrain();
+    const tp=document.getElementById("trPush");if(!tp||tp.checked){const [y,m,dd]=date.split("-").map(Number);pushSend(()=>({title:t("trAddT")+" · "+teamLabel(TEAM),body:trLabel({date:new Date(y,m-1,dd),time,place}).replace(/&[^;]+;/g,"")}),"ann")}
+    return}
+  const odel=e.target.closest("[data-trodel]");if(odel){const k=odel.dataset.trodel;if(odel.dataset.armed!=="1"){odel.dataset.armed="1";odel.textContent="למחוק?";return}
+    await trSave({extra:(tr.extra||[]).filter(s=>s.date+"_"+(s.time||"")!==k)});renderTrain();return}
+  const del=e.target.closest("[data-trdel]");if(del){const [d,time]=del.dataset.trdel.split("|");await trSave({slots:(tr.slots||[]).filter(s=>!(String(s.d)===d&&(s.time||"")===time))});renderTrain();return}
   const x=e.target.closest("[data-trx]");if(x){const k=x.dataset.trx,c={...(tr.cancel||{})},was=!!c[k],tp=document.getElementById("trPush"),wantPush=!tp||tp.checked;if(was)delete c[k];else c[k]=true;
     for(const ck of Object.keys(c))if(ck.slice(0,10)<iso(today()))delete c[ck];
-    await writeDoc(TR_K,{slots:tr.slots||[],cancel:c});renderTrain();
+    await trSave({cancel:c});renderTrain();
     const it=upcomingTrainings(12).find(u=>u.key===k);
     if(it&&wantPush)pushSend(()=>({title:(was?t("trOnT"):t("trOffT"))+" · "+teamLabel(TEAM),body:trLabel(it).replace(/&[^;]+;/g,"")}),"ann");
   }
